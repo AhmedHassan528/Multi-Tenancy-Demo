@@ -1,58 +1,62 @@
-﻿
-using Microsoft.Extensions.Options;
-using Multi_Tenancy_Demo.Settings;
+﻿using Microsoft.Extensions.Options;
 
-namespace Multi_Tenancy_Demo.Services
+namespace MultiTenancy.Services;
+
+public class TenantService : ITenantService
 {
-    public class TenantService : ITenantService
+    private readonly TenantSettings _tenantSettings;
+    private HttpContext? _httpContext;
+    private Tenant? _currentTenant;
+
+    public TenantService(IHttpContextAccessor contextAccessor, IOptions<TenantSettings> tenantSettings)
     {
-        private readonly TenantSettings _tenantSettings;
-        private Tenant _CurrentTenant;
-        private HttpContext _httpContext;
+        _httpContext = contextAccessor.HttpContext;
+        _tenantSettings = tenantSettings.Value;
 
-        public TenantService(IHttpContextAccessor contextAccessor, IOptions<TenantSettings> tenantSettings)
+        if (_httpContext is not null)
         {
-            _httpContext = contextAccessor.HttpContext;
-            _tenantSettings = tenantSettings.Value;
-
-            if (_httpContext.Request.Headers.TryGetValue("tenant", out var SetTenant))
+            if (_httpContext.Request.Headers.TryGetValue("tenant", out var tenantId))
             {
-                SetCurrentTenant(SetTenant!);
+                SetCurrentTenant(tenantId!);
+            }
+            else
+            {
+                throw new Exception("No tenant provided!");
             }
         }
+    }
 
 
+    public Tenant? GetCurrentTenant()
+    {
+        return _currentTenant;
+    }
 
+    public string? GetDatabaseProvider()
+    {
+        return _tenantSettings.Defaults.DBProvider;
+    }
+    public string? GetConnectionString()
+    {
+        var currentConnectionString = _currentTenant is null
+            ? _tenantSettings.Defaults.ConnectionString
+            : _currentTenant.ConnectionString;
 
-        public string? GetDatabaseProvider()
+        return currentConnectionString;
+    }
+
+    private void SetCurrentTenant(string tenantId)
+    {
+        _currentTenant = _tenantSettings.Tenants.FirstOrDefault(t => t.TId == tenantId);
+
+        if (_currentTenant is null)
         {
-            var currentConnectionString = _CurrentTenant is null
-                ? _tenantSettings.Configuration.ConnectionString
-                : _CurrentTenant.ConnectionString;
-
-            return currentConnectionString;
+            throw new Exception("Invalid tenant ID");
         }
-        public string? GetConnectionString()
-        {
-            return _CurrentTenant.ConnectionString;
-        }
-        public Tenant? GetCurrentTenant()
-        {
-            return _CurrentTenant;
-        }
 
-        private void SetCurrentTenant(string tenantId)
+        if (string.IsNullOrEmpty(_currentTenant.ConnectionString))
         {
-            _CurrentTenant = _tenantSettings.Tenants.FirstOrDefault(t => t.TId == tenantId);
-
-            if (_CurrentTenant == null)
-            {
-                throw new Exception("Tenant not found");
-            }
-            if (string.IsNullOrEmpty(_CurrentTenant.ConnectionString))
-            {
-                _CurrentTenant.ConnectionString = _tenantSettings.Configuration.ConnectionString;
-            }
+            _currentTenant.ConnectionString = _tenantSettings.Defaults.ConnectionString;
         }
     }
 }

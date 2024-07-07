@@ -1,6 +1,0 @@
-@Multi_Tenancy_Demo_HostAddress = http://localhost:5083
-
-GET {{Multi_Tenancy_Demo_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

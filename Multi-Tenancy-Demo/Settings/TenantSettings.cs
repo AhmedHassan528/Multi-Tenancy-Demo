@@ -2,7 +2,7 @@
 {
     public class TenantSettings
     {
-        public List<Tenant> Tenants { get; set; } = new List<Tenant>();
-        public Configuration Configuration { get; set; } = new Configuration();
+        public Configuration Defaults { get; set; } = default!;
+        public List<Tenant> Tenants { get; set; } = new();
     }
 }

@@ -1,0 +1,7 @@
+@host = https://localhost:7100
+@host = http://localhost:5083
+
+
+
+GET {{host}}/api/products
+###
