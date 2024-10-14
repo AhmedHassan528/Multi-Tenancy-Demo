@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace MultiTenancy;
+namespace MultiTenancy.ConfigureServices;
 
-public static class ConfigureServices
+public static class ConfigureTenantServices
 {
     public static IServiceCollection AddTenancy(this IServiceCollection services,
         ConfigurationManager configuration)

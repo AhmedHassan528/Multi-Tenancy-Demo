@@ -1,4 +1,6 @@
-﻿namespace MultiTenancy.Services;
+﻿using MultiTenancy.Settings;
+
+namespace MultiTenancy.Services;
 
 public interface ITenantService
 {

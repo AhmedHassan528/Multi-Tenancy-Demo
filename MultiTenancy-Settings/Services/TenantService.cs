@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace MultiTenancy.Services;
 
@@ -13,9 +14,9 @@ public class TenantService : ITenantService
         _httpContext = contextAccessor.HttpContext;
         _tenantSettings = tenantSettings.Value;
 
-        if(_httpContext is not null)
+        if (_httpContext is not null)
         {
-            if(_httpContext.Request.Headers.TryGetValue("tenant", out var tenantId))
+            if (_httpContext.Request.Headers.TryGetValue("tenant", out var tenantId))
             {
                 SetCurrentTenant(tenantId!);
             }
@@ -28,7 +29,7 @@ public class TenantService : ITenantService
 
     public string? GetConnectionString()
     {
-        var currentConnectionString = _currentTenant is null 
+        var currentConnectionString = _currentTenant is null
             ? _tenantSettings.Defaults.ConnectionString
             : _currentTenant.ConnectionString;
 

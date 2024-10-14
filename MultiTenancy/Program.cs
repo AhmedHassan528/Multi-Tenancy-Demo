@@ -1,4 +1,4 @@
-using MultiTenancy;
+using MultiTenancy.ConfigureServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
