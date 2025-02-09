@@ -11,7 +11,7 @@ public class ProductService : IProductService
         _context = context;
     }
 
-    public async Task<Product> CreatedAsync(Product product)
+    public async Task<ProductModel> CreatedAsync(ProductModel product)
     {
         _context.Products.Add(product);
 
@@ -36,12 +36,12 @@ public class ProductService : IProductService
 
     }
 
-    public async Task<IReadOnlyList<Product>> GetAllAsync()
+    public async Task<IReadOnlyList<ProductModel>> GetAllAsync()
     {
-        return await _context.Products.ToListAsync();
+        return await _context.Products.Include(p => p.category).Include(p => p.Brand).ToListAsync();
     }
 
-    public async Task<Product?> GetByIdAsync(int id)
+    public async Task<ProductModel?> GetByIdAsync(int id)
     {
         return await _context.Products.FindAsync(id);
     }

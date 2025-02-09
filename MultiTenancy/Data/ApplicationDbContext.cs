@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MultiTenancy.Models.AuthModels;
 
 namespace MultiTenancy.Data;
 
@@ -14,11 +15,15 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
         TenantId = _tenantService.GetCurrentTenant()?.TId;
     }
 
-    public DbSet<Product> Products { get; set; }
+    public DbSet<ProductModel> Products { get; set; }
+    public DbSet<BrandModel> Brands { get; set; }
+    public DbSet<CategoryModel> Categories { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<ProductModel>().HasQueryFilter(e => e.TenantId == TenantId);
         base.OnModelCreating(modelBuilder);
     }
 

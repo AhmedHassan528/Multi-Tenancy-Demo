@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace MultiTenancy.Models
+namespace MultiTenancy.Models.AuthModels
 {
     public class AppUser : IdentityUser
     {

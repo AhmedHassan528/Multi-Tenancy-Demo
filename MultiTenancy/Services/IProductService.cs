@@ -2,8 +2,8 @@
 
 public interface IProductService
 {
-    Task<Product> CreatedAsync(Product product);
-    Task<Product?> GetByIdAsync(int id);
+    Task<ProductModel> CreatedAsync(ProductModel product);
+    Task<ProductModel?> GetByIdAsync(int id);
     Task<string> DeleteProduct(int id);
-    Task<IReadOnlyList<Product>> GetAllAsync();
+    Task<IReadOnlyList<ProductModel>> GetAllAsync();
 }
