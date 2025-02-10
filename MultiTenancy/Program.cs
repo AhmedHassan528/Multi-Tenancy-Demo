@@ -4,8 +4,6 @@ using Authentication_With_JWT.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenancy.ConfigureServices;
-using MultiTenancy.Services.BrandServices;
-using MultiTenancy.Services.CategoriesServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +17,8 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoriesServices, CategoriesServices>();
 builder.Services.AddScoped<IBrandServices,BrandServices>();
+builder.Services.AddScoped<IWishListServices, WishListServices>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISendMail, SendMail>();
 builder.Services.AddHttpContextAccessor();

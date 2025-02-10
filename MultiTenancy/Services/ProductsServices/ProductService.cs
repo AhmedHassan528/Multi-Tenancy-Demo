@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace MultiTenancy.Services;
+namespace MultiTenancy.Services.ProductsServices;
 
 public class ProductService : IProductService
 {

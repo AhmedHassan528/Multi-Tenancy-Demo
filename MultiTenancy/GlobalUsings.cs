@@ -6,3 +6,10 @@ global using MultiTenancy.Data;
 global using Authentication_With_JWT.Services;
 global using Microsoft.AspNetCore.Identity;
 global using MultiTenancy.Models.AuthModels;
+global using MultiTenancy.Services.BrandServices;
+global using MultiTenancy.Services.CategoriesServices;
+global using MultiTenancy.Services.ProductsServices;
+global using MultiTenancy.Services.WishListServices;
+global using MultiTenancy.Dtos;
+
+

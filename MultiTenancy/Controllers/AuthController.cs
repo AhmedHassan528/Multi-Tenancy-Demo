@@ -92,7 +92,6 @@ namespace Authentication_With_JWT.Controllers
             else
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                //var test = await _userManager.ResetPasswordAsync(user, token, "NewPassword");
                 var result = await _sendMail.SendEmailAsync(email, "Reset Password", token, "ForgotPasswordConfermation");
                 return result;
             }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MultiTenancy.Dtos;
 
 namespace MultiTenancy.Controllers;
 

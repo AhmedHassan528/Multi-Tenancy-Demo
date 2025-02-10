@@ -46,7 +46,7 @@ namespace Authentication_With_JWT.Services
 
             // Send Email
             var EmailSend = await _sendMail.SendEmailAsync(model.Email, "Confirmation Your Account","", "ConfirmEmail");
-            if (EmailSend != null) 
+            if (!string.IsNullOrEmpty(EmailSend)) 
             {
                 await _userManager.DeleteAsync(user);
                 return new AuthModel { Message = "something error when sending email" };

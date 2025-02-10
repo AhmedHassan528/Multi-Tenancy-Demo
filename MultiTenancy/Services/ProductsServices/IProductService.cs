@@ -1,4 +1,4 @@
-﻿namespace MultiTenancy.Services;
+﻿namespace MultiTenancy.Services.ProductsServices;
 
 public interface IProductService
 {

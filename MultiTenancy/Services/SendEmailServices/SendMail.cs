@@ -54,7 +54,7 @@ namespace Authentication_With_JWT.Services
 
 
                 using var smtp = new SmtpClient();
-                smtp.Connect(_mailSetting.Host, _mailSetting.Port, SecureSocketOptions.StartTls);
+                smtp.Connect(_mailSetting.Host, _mailSetting.Port, SecureSocketOptions.SslOnConnect);
                 smtp.Authenticate(_mailSetting.Email, _mailSetting.Password);
                 await smtp.SendAsync(email);
                 smtp.Disconnect(true);

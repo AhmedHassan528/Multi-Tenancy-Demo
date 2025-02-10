@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MultiTenancy.Data;
 
@@ -11,9 +12,11 @@ using MultiTenancy.Data;
 namespace MultiTenancy.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250210014716_productsv2")]
+    partial class productsv2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -312,6 +315,9 @@ namespace MultiTenancy.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool?>("isInWishlist")
+                        .HasColumnType("bit");
+
                     b.Property<string>("price")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -333,70 +339,6 @@ namespace MultiTenancy.Migrations
                     b.HasIndex("CategoryID");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("MultiTenancy.Models.WishListModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("BrandID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CategoryID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NumSold")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("imageCover")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("images")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("price")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("productID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ratingsQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("userID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandID");
-
-                    b.HasIndex("CategoryID");
-
-                    b.ToTable("WishLists");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -451,21 +393,6 @@ namespace MultiTenancy.Migrations
                 });
 
             modelBuilder.Entity("MultiTenancy.Models.ProductModel", b =>
-                {
-                    b.HasOne("MultiTenancy.Models.BrandModel", "Brand")
-                        .WithMany()
-                        .HasForeignKey("BrandID");
-
-                    b.HasOne("MultiTenancy.Models.CategoryModel", "category")
-                        .WithMany()
-                        .HasForeignKey("CategoryID");
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("category");
-                });
-
-            modelBuilder.Entity("MultiTenancy.Models.WishListModel", b =>
                 {
                     b.HasOne("MultiTenancy.Models.BrandModel", "Brand")
                         .WithMany()
