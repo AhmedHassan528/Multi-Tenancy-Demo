@@ -18,6 +18,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoriesServices, CategoriesServices>();
 builder.Services.AddScoped<IBrandServices,BrandServices>();
 builder.Services.AddScoped<IWishListServices, WishListServices>();
+builder.Services.AddScoped<IAddressServices, AddressServices>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISendMail, SendMail>();

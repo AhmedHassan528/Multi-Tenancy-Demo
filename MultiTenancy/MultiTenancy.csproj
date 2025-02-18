@@ -30,8 +30,4 @@
     <ProjectReference Include="..\MultiTenancy-Settings\MultiTenancy-Settings.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Dtos\AuthDtos\" />
-  </ItemGroup>
-
 </Project>

@@ -19,8 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<BrandModel> Brands { get; set; }
     public DbSet<CategoryModel> Categories { get; set; }
     public DbSet<WishListModel> WishLists { get; set; }
-
-
+    public DbSet<AddressModel> Addresses { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

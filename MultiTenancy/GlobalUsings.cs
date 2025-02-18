@@ -11,5 +11,7 @@ global using MultiTenancy.Services.CategoriesServices;
 global using MultiTenancy.Services.ProductsServices;
 global using MultiTenancy.Services.WishListServices;
 global using MultiTenancy.Dtos;
+global using MultiTenancy.Services.AddressServices;
+
 
 
