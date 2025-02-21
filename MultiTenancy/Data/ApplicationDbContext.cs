@@ -21,11 +21,29 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<WishListModel> WishLists { get; set; }
     public DbSet<AddressModel> Addresses { get; set; }
 
+    public DbSet<CartModel> Carts { get; set; }
+    public DbSet<CartItemModel> CartItemes { get; set; }
+
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ProductModel>().HasQueryFilter(e => e.TenantId == TenantId);
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<CartModel>()
+            .HasMany(c => c.Products)
+            .WithOne(ci => ci.Cart)
+            .HasForeignKey(ci => ci.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CartItemModel>()
+            .HasOne(ci => ci.Product)
+            .WithMany()
+            .HasForeignKey(ci => ci.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

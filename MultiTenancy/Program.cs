@@ -19,6 +19,8 @@ builder.Services.AddScoped<ICategoriesServices, CategoriesServices>();
 builder.Services.AddScoped<IBrandServices,BrandServices>();
 builder.Services.AddScoped<IWishListServices, WishListServices>();
 builder.Services.AddScoped<IAddressServices, AddressServices>();
+builder.Services.AddScoped<ICartServices, CartServices>();
+
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISendMail, SendMail>();
@@ -48,7 +50,11 @@ builder.Services.AddAuthentication(op =>
             ValidateLifetime = true
         };
     });
-
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
 
 builder.Services.AddControllers();
@@ -56,6 +62,12 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
+app.UseCors(builder =>
+    builder.AllowAnyOrigin()
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+);
 
 app.UseHttpsRedirection();
 
