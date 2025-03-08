@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace Authentication_With_JWT.Controllers
 {
@@ -16,19 +17,19 @@ namespace Authentication_With_JWT.Controllers
             _userManager = userManager;
         }
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterModel model, [FromHeader] string? ReqUrl)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _authService.RegisterAsync(model);
+            var result = await _authService.RegisterAsync(model, ReqUrl);
 
             if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
 
-            return Ok(result);
+            return Ok(new { message = "You’ve got mail! Please check your inbox to confirm your email address." });
 
         }
         [HttpPost("Login")]
@@ -42,7 +43,7 @@ namespace Authentication_With_JWT.Controllers
             var result = await _authService.LoginAsync(model);
 
             if (!result.IsAuthenticated)
-                return BadRequest(result.Message);
+                return BadRequest(new { message = result.Message});
 
             return Ok(result);
         }
@@ -63,23 +64,25 @@ namespace Authentication_With_JWT.Controllers
         }
 
         [HttpPost("ConfirmEmail")]
-        public async Task<string> ConfirmEmail(string userId, string token)
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (userId == null || token == null)
             {
-                return "Link expired";
+                return BadRequest("Link expired");
+
             }
             else if (user == null)
             {
-                return "User not Found";
+                return BadRequest("User not Found");
+
             }
             var result = await _authService.ConfirmEmail(userId, token);
 
             if (!string.IsNullOrEmpty(result))
-                return result;
+                return BadRequest(result);
+            return Ok("Your Email confirmed");
 
-            return "Your Email confirmed";
         }
         [HttpPost("ForgotPassword")]
         public async Task<string> ForgotPassword([FromBody] string email)
@@ -92,7 +95,7 @@ namespace Authentication_With_JWT.Controllers
             else
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var result = await _sendMail.SendEmailAsync(email, "Reset Password", token, "ForgotPasswordConfermation");
+                var result = await _sendMail.SendEmailAsync(email, "Reset Password", token, "ForgotPasswordConfermation", null);
                 return result;
             }
         }

@@ -2,6 +2,6 @@
 {
     public interface ISendMail
     {
-        Task<string> SendEmailAsync(string emailTo, string subject, string? token, string controllerName);
+        Task<string> SendEmailAsync(string emailTo, string subject, string? token, string controllerName, string? ReqUrl);
     }
 }

@@ -20,7 +20,7 @@ namespace Authentication_With_JWT.Services
 
         }
 
-        public async Task<string> SendEmailAsync(string emailTo, string subject, string? token, string controllerName)
+        public async Task<string> SendEmailAsync(string emailTo, string subject, string? token, string controllerName, string? ReqUrl)
         {
 
             try
@@ -40,13 +40,35 @@ namespace Authentication_With_JWT.Services
                 if (user is null)
                     return "Email is incorrect";
 
-
-                if (string.IsNullOrEmpty(token))
+                var confirmationLink = "";
+                if (!string.IsNullOrEmpty(ReqUrl))
                 {
-                    token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    confirmationLink = $"{ReqUrl}/ConfirmEmail?UserId={user.Id}&Token={token}";
                 }
-                var confirmationLink = $"https://localhost:7241/api/Auth/{controllerName}?UserId={user.Id}&Token={token}";
-                builder.HtmlBody = confirmationLink;
+                else
+                {
+                    confirmationLink = $"{ReqUrl}/ConfirmEmail?UserId={user.Id}&Token={token}";
+                }
+                builder.HtmlBody = 
+                    $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif;'>
+                        <h2>{subject}</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>Thank you for signing up! Please confirm your email address by clicking the button below:</p>
+                        <p>
+                            <a href='{confirmationLink}' 
+                               style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                                Confirm Email
+                            </a>
+                        </p>
+                        <p>If the button doesn't work, copy and paste the following link into your browser:</p>
+                        <p><a href='{confirmationLink}'>{confirmationLink}</a></p>
+                        <br>
+                        <p>If you didn’t request this, please ignore this email.</p>
+                        <p>Best regards,<br><strong>Ahmed Hassan</strong></p>
+                    </body>
+                    </html>";
                 email.Body = builder.ToMessageBody();
 
                 email.From.Add(new MailboxAddress(_mailSetting.DisplayName, _mailSetting.Email));

@@ -2,7 +2,7 @@
 {
     public interface IAuthService
     {
-        Task<AuthModel> RegisterAsync(RegisterModel model);
+        Task<AuthModel> RegisterAsync(RegisterModel model, string? ReqUrl);
         Task<AuthModel> LoginAsync(LoginModel model);
         Task<string> AddRoleAsync(AddRoleModel model);
         Task<string> ConfirmEmail(string userId, string token);

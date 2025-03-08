@@ -26,7 +26,7 @@ namespace Authentication_With_JWT.Services
 
 
 
-        public async Task<AuthModel> RegisterAsync(RegisterModel model)
+        public async Task<AuthModel> RegisterAsync(RegisterModel model, string? ReqUrl)
         {
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
                 return new AuthModel { Message = "Email is already registered!" };
@@ -36,16 +36,26 @@ namespace Authentication_With_JWT.Services
             var user = new AppUser
             {
                 UserName = model.UserName,
-                Email = model.Email,
+                Email = model.Email.ToLower(),
                 FirstName = model.FirstName,
                 LastName = model.LastName
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                return new AuthModel
+                {
+                    Message = "Error: " + string.Join(" | ", result.Errors.Select(e => e.Description)),
+                    IsAuthenticated = false
+                };
+            }
 
+            // generate confirm token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
             // Send Email
-            var EmailSend = await _sendMail.SendEmailAsync(model.Email, "Confirmation Your Account", "", "ConfirmEmail");
+            var EmailSend = await _sendMail.SendEmailAsync(model.Email, "Confirmation Your Account", token, "ConfirmEmail", ReqUrl);
             if (!string.IsNullOrEmpty(EmailSend))
             {
                 await _userManager.DeleteAsync(user);
@@ -62,6 +72,12 @@ namespace Authentication_With_JWT.Services
                 }
                 return new AuthModel { Message = Errors };
             }
+            var roleName = "User";
+            if (!await _roleManager.RoleExistsAsync(roleName))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+
             await _userManager.AddToRoleAsync(user, "User");
 
             var jwtSecurityToken = await CreateJwtToken(user);
@@ -82,6 +98,10 @@ namespace Authentication_With_JWT.Services
             if (user is null || !await _userManager.CheckPasswordAsync(user, model.Password))
             {
                 return new AuthModel { Message = "Email or password is incorrect" };
+            }
+            if(!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return new AuthModel { Message = "Must Confirm your email address" };
             }
             var jwtSecurityToken = await CreateJwtToken(user);
 
