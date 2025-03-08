@@ -3,6 +3,6 @@
     public class CreateCategoryDto
     {
         public string Name { get; set; }
-        public string image { get; set; }
+        public IFormFile ImageFiles { get; set; }
     }
 }

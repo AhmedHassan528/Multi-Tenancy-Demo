@@ -1,7 +1,4 @@
-﻿
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-
-namespace Authentication_With_JWT.Services
+﻿namespace Authentication_With_JWT.Services
 {
     public interface IAuthService
     {
@@ -9,7 +6,7 @@ namespace Authentication_With_JWT.Services
         Task<AuthModel> LoginAsync(LoginModel model);
         Task<string> AddRoleAsync(AddRoleModel model);
         Task<string> ConfirmEmail(string userId, string token);
-        Task<string> ForgotPasswordConfermationModel (ForgotPasswordConfermationModel model);
+        Task<string> ForgotPasswordConfermationModel(ForgotPasswordConfermationModel model);
         Task<string> DeleteAccount(string error, string email);
 
 

@@ -43,7 +43,7 @@ namespace MultiTenancy.Services.CartServices
                 {
                     ProductId = productId,
                     Count = quantity,
-                    Price = decimal.Parse(product.price)
+                    Price = product.price
                 });
             }
 
@@ -80,15 +80,86 @@ namespace MultiTenancy.Services.CartServices
             var cart = await _context.Carts
                 .AsNoTracking()
                 .Include(c => c.Products)
-                .ThenInclude(ci => ci.Product)
+                    .ThenInclude(ci => ci.Product)
+                        .ThenInclude(p => p.category)
+                .Include(c => c.Products)
+                    .ThenInclude(ci => ci.Product)
+                        .ThenInclude(p => p.Brand)
                 .FirstOrDefaultAsync(c => c.CartOwner == userId);
 
             if (cart == null)
                 throw new Exception("Cart not found");
 
             return cart;
+
+
+        }
+        public async Task<CartModel> IncreaseItemCountAsync(string userId, int productId)
+        {
+            var cart = await _context.Carts
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.CartOwner == userId);
+
+            if (cart == null)
+                throw new Exception("Cart not found");
+
+            var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
+            if (cartItem == null)
+                throw new Exception("Product not found in cart");
+
+            cartItem.Count++; // Increase count
+            cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return cart;
         }
 
+        public async Task<CartModel> DecreaseItemCountAsync(string userId, int productId)
+        {
+            var cart = await _context.Carts
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.CartOwner == userId);
+
+            if (cart == null)
+                throw new Exception("Cart not found");
+
+            var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
+            if (cartItem == null)
+                throw new Exception("Product not found in cart");
+
+            if (cartItem.Count > 1)
+            {
+                cartItem.Count--;
+            }
+            else
+            {
+                cart.Products.Remove(cartItem);
+            }
+
+            cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return cart;
+        }
+
+        public async Task<CartModel> ClearCartAsync(string userId)
+        {
+            var cart = await _context.Carts
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.CartOwner == userId);
+
+            if (cart == null)
+                throw new Exception("Cart not found");
+
+            cart.Products.Clear(); // Remove all items from cart
+            cart.TotalCartPrice = 0;
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return cart;
+        }
 
     }
 }

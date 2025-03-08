@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using MultiTenancy.Models.AuthModels;
 
 namespace MultiTenancy.Data;
 
@@ -32,6 +32,13 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
         modelBuilder.Entity<ProductModel>().HasQueryFilter(e => e.TenantId == TenantId);
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<ProductModel>()
+            .Property(p => p.Images)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+            );
+
         modelBuilder.Entity<CartModel>()
             .HasMany(c => c.Products)
             .WithOne(ci => ci.Cart)
@@ -44,17 +51,23 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .HasForeignKey(ci => ci.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        //modelBuilder.Entity<Wishlist>()
+        //    .HasMany(w => w.WishlistItems)
+        //    .WithOne(wi => wi.Wishlist)
+        //    .HasForeignKey(wi => wi.WishlistId)
+        //    .OnDelete(DeleteBehavior.Cascade);
+
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var tenantConnectionString = _tenantService.GetConnectionString();
 
-        if(!string.IsNullOrWhiteSpace(tenantConnectionString))
+        if (!string.IsNullOrWhiteSpace(tenantConnectionString))
         {
             var dbProvider = _tenantService.GetDatabaseProvider();
 
-            if(dbProvider?.ToLower() == "mssql")
+            if (dbProvider?.ToLower() == "mssql")
             {
                 optionsBuilder.UseSqlServer(tenantConnectionString);
             }

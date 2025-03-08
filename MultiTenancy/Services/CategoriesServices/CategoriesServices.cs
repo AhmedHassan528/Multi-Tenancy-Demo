@@ -6,16 +6,52 @@ namespace MultiTenancy.Services.CategoriesServices
     public class CategoriesServices : ICategoriesServices
     {
         private readonly ApplicationDbContext _context;
-        public CategoriesServices(ApplicationDbContext context)
+        private readonly IWebHostEnvironment hosting;
+
+        public CategoriesServices(ApplicationDbContext context, IWebHostEnvironment hosting)
         {
             _context = context;
+            this.hosting = hosting;
+
         }
 
         public async Task<CategoryModel> CreatedAsync(CategoryModel category)
         {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-            return category;
+            string imagePath = "";
+            try
+            {
+
+                if (category.ImageFiles != null)
+                {
+                    string ImageFolder = Path.Combine(hosting.WebRootPath, "CategoryImages");
+
+                    string fileExtension = Path.GetExtension(category.ImageFiles.FileName);
+                    string fileName = Guid.NewGuid().ToString() + fileExtension;
+                    imagePath = Path.Combine(ImageFolder, fileName);
+
+                    using (var stream = new FileStream(imagePath, FileMode.Create))
+                    {
+                        category.ImageFiles.CopyTo(stream);
+                    }
+                    // Store the full URL instead of just the file name
+                    category.image = $"https://localhost:7060/CategoryImages/{fileName}";
+                }
+                else
+                {
+                    throw new Exception("Must add cover Image");
+                }
+
+
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+                return category;
+            }
+            catch (Exception)
+            {
+                File.Delete(imagePath!);
+                throw new Exception("some thing error");
+
+            }
         }
 
         public async Task<string> DeleteCategory(int id)

@@ -12,6 +12,8 @@ namespace MultiTenancy.Models
 
         public List<CartItemModel> Products { get; set; } = new List<CartItemModel>();
 
+
+
         [Required]
         public decimal TotalCartPrice { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

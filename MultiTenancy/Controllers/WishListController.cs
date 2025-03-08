@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MultiTenancy.Services.WishListServices;
 
 namespace MultiTenancy.Controllers
 {
@@ -15,53 +16,75 @@ namespace MultiTenancy.Controllers
         {
             _wishList = wishList;
         }
-
-        [HttpPost]
-        public async Task<IActionResult> AddproductAsync(WishListDto wishList)
-        {    
-            var result = await _wishList.AddToWithListAsync(wishList.userID, wishList.productID);
-            if(string.IsNullOrEmpty(result))
+        [HttpGet("Product")]
+        public async Task<IActionResult> GetWishlistProducts([FromHeader] string userId)
+        {
+            try
             {
-                return Ok(await _wishList.GetWishListAsync(wishList.userID));
+                var Products = await _wishList.GetAllProductinWishList(userId);
+                return Ok(Products);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
         [HttpGet]
-        public async Task<IActionResult> GetAllWithList([FromHeader] string userID)
+        public async Task<IActionResult> GetWishlist([FromHeader] string userId)
         {
-            var result = await _wishList.GetWishListAsync(userID);
-            return Ok(result);
+            try
+            {
+                var wishlist = await _wishList.GetWishlistAsync(userId);
+                return Ok(wishlist);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        [HttpDelete("{productID}")]
-        public async Task<IActionResult> DeleteWishList(int productID, [FromHeader] string userID)
+        [HttpPost("add/{ProductId}")]
+        public async Task<IActionResult> AddToWishlist([FromHeader] string userId, int ProductId)
         {
-            if (userID == null)
+            try
             {
-                return NotFound();
+                var wishlist = await _wishList.AddToWishlistAsync(userId, ProductId);
+                return Ok(new { message = "the product are added successfully", wishlist });
             }
-            var result = await _wishList.DeleteWishListById(userID, productID);
-            if (string.IsNullOrEmpty(result))
+            catch (Exception ex)
             {
-                return Ok(await _wishList.GetWishListAsync(userID));
+                return BadRequest(new { message = ex.Message });
             }
-            return Ok(result);
-
         }
-        [HttpDelete]
-        public async Task<IActionResult> ClearWishList([FromHeader] string userID)
-        {
-            if (userID == null)
-            {
-                return NotFound();
-            }
-            var result = await _wishList.DeleteAllWishList(userID);
-            if (string.IsNullOrEmpty(result))
-            {
-                return Ok("all products all deleted");
-            }
-            return Ok(result);
 
+        [HttpDelete("remove/{ProductId}")]
+        public async Task<IActionResult> RemoveFromWishlist([FromHeader] string userId, int ProductId)
+        {
+            try
+            {
+                var wishlist = await _wishList.RemoveFromWishlistAsync(userId, ProductId);
+                return Ok(new { message = "the product are deleted successfully", wishlist });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Clear Wishlist
+        [HttpDelete("clear")]
+        public async Task<IActionResult> ClearWishlist([FromHeader] string userId)
+        {
+            try
+            {
+                var success = await _wishList.ClearWishlistAsync(userId);
+                return success ? Ok(new { message = "Wishlist cleared successfully" }) : NotFound();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

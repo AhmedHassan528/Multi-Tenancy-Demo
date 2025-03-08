@@ -15,84 +15,112 @@ namespace MultiTenancy.Services.WishListServices
             _productService = productService;
         }
 
-        public async Task<string> AddToWithListAsync(string userId, int productId)
+        public async Task<WishListModel> AddToWishlistAsync(string userId, int productId)
         {
             if (!await UserExistsAsync(userId))
             {
-                return "user is not found";
+                throw new Exception("User not found");
             }
-            var product = await _productService.GetByIdAsync(productId);
-            if (product == null)
+            var pro = await _context.Products.FirstOrDefaultAsync(w => w.Id == productId);
+
+            if (pro == null)
             {
-                return "the product is not found";
+                throw new Exception("Product not found");
             }
-            var isinWishList = await _context.WishLists.AnyAsync(i => i.productID == productId);
-            if (isinWishList == true)
+
+            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+            if (wishlist == null)
             {
-                return "the product is already existed in wishlist";
+                WishListModel model = new()
+                {
+                    UserId = userId,
+                    ProductsIDs = new List<int> { productId}
+                };
+                _context.WishLists.Add(model);
+                await _context.SaveChangesAsync();
+                return model;
             }
-            WishListModel model = new()
+            else
             {
-                productID = product.Id,
-                userID = userId,
-                NumSold = product.NumSold,
-                images = product.images,
-                ratingsQuantity = product.ratingsQuantity,
-                title = product.title,
-                description = product.description,
-                quantity = product.quantity,
-                price = product.price,
-                imageCover = product.imageCover,
-                CategoryID = product.CategoryID,
-                BrandID = product.BrandID
-            };
-            _context.WishLists.Add(model);
+                if (wishlist.ProductsIDs.Contains(productId))
+                {
+                    throw new Exception("Product already added");
+                }
+                wishlist.ProductsIDs.Add(productId);
+                _context.WishLists.Update(wishlist);
+                await _context.SaveChangesAsync();
+                return wishlist;
+            }
+        }
+
+
+        public async Task<WishListModel> GetWishlistAsync(string userId)
+        {
+            if(!await UserExistsAsync(userId))
+            {
+                throw new Exception("User not found");
+            }
+            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+            return wishlist ?? new WishListModel { UserId = userId, ProductsIDs = new List<int>() };
+        }
+
+        public async Task<bool> ClearWishlistAsync(string userId)
+        {
+            if (!await UserExistsAsync(userId))
+            {
+                throw new Exception("User not found");
+            }
+
+            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+            if (wishlist == null)
+            {
+                throw new Exception("Wishlist not found");
+            }
+
+            _context.WishLists.Remove(wishlist);
             await _context.SaveChangesAsync();
 
-            return "";
+            return true;
         }
 
-        public async Task<string> DeleteAllWishList(string userId)
+        public async Task<WishListModel> RemoveFromWishlistAsync(string userId, int productId)
         {
             if (!await UserExistsAsync(userId))
             {
-                return "user is not found";
+                throw new Exception("User not found");
             }
-            var allWishList = await _context.WishLists.Where(i => i.userID == userId).ToListAsync();
-            if (allWishList == null || !allWishList.Any())
+
+            var wishpro = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+            if (!wishpro.ProductsIDs.Contains(productId))
             {
-                return "no items found in wishlist";
+                throw new Exception("can not find this product in your wishList");
             }
-            _context.WishLists.RemoveRange(allWishList);
+            wishpro.ProductsIDs.Remove(productId);
+            _context.WishLists.Update(wishpro);
             await _context.SaveChangesAsync();
-            return "";
+            return wishpro;
         }
 
-        public async Task<string> DeleteWishListById(string userId, int productId)
+        public async Task<List<ProductModel>> GetAllProductinWishList(string userId)
         {
             if (!await UserExistsAsync(userId))
             {
-                return "user is not found";
+                throw new Exception("User not found");
             }
-            var product = await _context.WishLists.FindAsync(productId);
-            if (product == null)
-            {
-                return "the product is not found in wishList";
-            }
-            _context.WishLists.Remove(product);
-            await _context.SaveChangesAsync();
-            return "";
 
+            var wishList = await GetWishlistAsync(userId);
+            if (wishList == null || !wishList.ProductsIDs.Any())
+            {
+                return new List<ProductModel>();
+            }
+
+            var products = await _context.Products.Include(b => b.Brand).Include(c => c.category)
+                                         .Where(p => wishList.ProductsIDs.Contains(p.Id))
+                                         .ToListAsync();
+
+            return products;
         }
 
-        public async Task<IReadOnlyList<WishListModel>> GetWishListAsync(string userId)
-        {
-            if (!await UserExistsAsync(userId))
-            {
-                return null;
-            }
-            return await _context.WishLists.Include(p => p.category).Include(p => p.Brand).Where(i => i.userID == userId).ToListAsync();
-        }
         private async Task<bool> UserExistsAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -102,5 +130,7 @@ namespace MultiTenancy.Services.WishListServices
             }
             return true;
         }
+
+
     }
 }

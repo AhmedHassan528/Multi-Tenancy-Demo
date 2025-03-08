@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace MultiTenancy.Controllers
 {
@@ -27,7 +26,7 @@ namespace MultiTenancy.Controllers
         [HttpPost]
         public async Task<IActionResult> AddAddress([FromHeader] string userID, [FromBody] AddresesesDto address)
         {
-            var Address = await _addressServices.AddAddress(userID,address);
+            var Address = await _addressServices.AddAddress(userID, address);
             if (Address == null)
             {
                 return BadRequest("Address not added");
@@ -36,7 +35,7 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpGet("GetAddressByID/{addressID}")]
-        public async Task<IActionResult> GetAddressByID(int addressID, [FromHeader] string userID )
+        public async Task<IActionResult> GetAddressByID(int addressID, [FromHeader] string userID)
         {
             var Address = await _addressServices.GetAddressByID(userID, addressID);
             if (Address == null)

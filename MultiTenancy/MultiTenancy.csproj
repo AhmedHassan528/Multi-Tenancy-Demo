@@ -30,4 +30,11 @@
     <ProjectReference Include="..\MultiTenancy-Settings\MultiTenancy-Settings.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ProductCoverImages\" />
+    <Folder Include="wwwroot\BrandImages\" />
+    <Folder Include="wwwroot\CategoryImages\" />
+    <Folder Include="wwwroot\ProductImages\" />
+  </ItemGroup>
+
 </Project>

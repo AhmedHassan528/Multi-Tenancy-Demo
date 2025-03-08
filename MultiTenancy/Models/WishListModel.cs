@@ -1,32 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MultiTenancy.Models
 {
-    public class WishListModel : IMustHaveTenant
+    public class WishListModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public int productID { get; set; }
-        public string userID { get; set; }
+        [Required]
+        public string UserId { get; set; }
 
-        public string NumSold { get; set; } = null!;
-        public string images { get; set; } = null!;
-        public int ratingsQuantity { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public int quantity { get; set; }
-        public string price { get; set; }
-        public string imageCover { get; set; }
-        public string TenantId { get; set; } = null!;
+        [Required]
+        public List<int> ProductsIDs { get; set; } = new List<int>();
 
-
-
-        [ForeignKey("CategoryModel")]
-        public int? CategoryID { get; set; }
-        public virtual CategoryModel? category { get; set; }
-
-        [ForeignKey("BrandModel")]
-        public int? BrandID { get; set; }
-        public virtual BrandModel? Brand { get; set; }
     }
 }

@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using MultiTenancy.Dtos;
-using MultiTenancy.Services.BrandServices;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace MultiTenancy.Controllers
 {
@@ -36,19 +32,19 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateCategory(CreateBrandDto dto)
+        public async Task<IActionResult> CreateBrand([FromForm]CreateBrandDto dto)
         {
             BrandModel brand = new()
             {
                 Name = dto.Name,
-                image = dto.image
+                ImageFiles = dto.imageFile
             };
             var createdBrand = await _brandService.CreatedAsync(brand);
             return Ok(createdBrand);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        public async Task<IActionResult> DeleteBrand(int id)
         {
             if (id != null)
             {

@@ -3,7 +3,6 @@ using Authentication_With_JWT.Setting;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 
 namespace Authentication_With_JWT.Services

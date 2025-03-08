@@ -9,7 +9,7 @@ namespace Authentication_With_JWT.Controllers
         private readonly IAuthService _authService;
         private readonly ISendMail _sendMail;
         private readonly UserManager<AppUser> _userManager;
-        public AuthController(IAuthService authService, ISendMail sendMail,UserManager<AppUser> userManager)
+        public AuthController(IAuthService authService, ISendMail sendMail, UserManager<AppUser> userManager)
         {
             _authService = authService;
             _sendMail = sendMail;
@@ -20,12 +20,12 @@ namespace Authentication_With_JWT.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return  BadRequest(ModelState);
+                return BadRequest(ModelState);
             }
 
             var result = await _authService.RegisterAsync(model);
 
-            if(!result.IsAuthenticated)
+            if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
 
             return Ok(result);
@@ -56,7 +56,7 @@ namespace Authentication_With_JWT.Controllers
 
             var result = await _authService.AddRoleAsync(model);
 
-            if (!string.IsNullOrEmpty(result)) 
+            if (!string.IsNullOrEmpty(result))
                 return BadRequest(result);
 
             return Ok(result);
@@ -98,7 +98,7 @@ namespace Authentication_With_JWT.Controllers
         }
 
         [HttpPost("ForgotPasswordConfermation")]
-        public async Task<string> ForgotPasswordConfermation([FromBody]ForgotPasswordConfermationModel model)
+        public async Task<string> ForgotPasswordConfermation([FromBody] ForgotPasswordConfermationModel model)
         {
             if (model.newPassword != model.confirmPassword)
             {

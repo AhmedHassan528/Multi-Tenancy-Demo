@@ -268,6 +268,27 @@ namespace MultiTenancy.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("MultiTenancy.Models.AuthModels.WishListModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProductsIDs")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WishLists");
+                });
+
             modelBuilder.Entity("MultiTenancy.Models.BrandModel", b =>
                 {
                     b.Property<int>("Id")
@@ -285,7 +306,6 @@ namespace MultiTenancy.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("image")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -332,6 +352,10 @@ namespace MultiTenancy.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("TotalCartPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -360,7 +384,6 @@ namespace MultiTenancy.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("image")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -382,9 +405,11 @@ namespace MultiTenancy.Migrations
                     b.Property<int?>("CategoryID")
                         .HasColumnType("int");
 
-                    b.Property<string>("NumSold")
-                        .IsRequired()
+                    b.Property<string>("Images")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumSold")
+                        .HasColumnType("int");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -392,29 +417,22 @@ namespace MultiTenancy.Migrations
 
                     b.Property<string>("description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("imageCover")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("images")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("price")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("price")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ratingsQuantity")
-                        .HasColumnType("int");
+                    b.Property<double>("ratingsQuantity")
+                        .HasColumnType("float");
 
                     b.Property<string>("title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
@@ -423,70 +441,6 @@ namespace MultiTenancy.Migrations
                     b.HasIndex("CategoryID");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("MultiTenancy.Models.WishListModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("BrandID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CategoryID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NumSold")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("imageCover")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("images")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("price")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("productID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ratingsQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("userID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandID");
-
-                    b.HasIndex("CategoryID");
-
-                    b.ToTable("WishLists");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -560,21 +514,6 @@ namespace MultiTenancy.Migrations
                 });
 
             modelBuilder.Entity("MultiTenancy.Models.ProductModel", b =>
-                {
-                    b.HasOne("MultiTenancy.Models.BrandModel", "Brand")
-                        .WithMany()
-                        .HasForeignKey("BrandID");
-
-                    b.HasOne("MultiTenancy.Models.CategoryModel", "category")
-                        .WithMany()
-                        .HasForeignKey("CategoryID");
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("category");
-                });
-
-            modelBuilder.Entity("MultiTenancy.Models.WishListModel", b =>
                 {
                     b.HasOne("MultiTenancy.Models.BrandModel", "Brand")
                         .WithMany()

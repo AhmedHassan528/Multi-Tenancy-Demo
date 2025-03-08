@@ -17,9 +17,10 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
-        var products = await _productService.GetAllAsync();
 
-        return Ok(products);
+            var products = await _productService.GetAllAsync();
+            return Ok(products);
+
     }
 
 
@@ -32,31 +33,30 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatedAsync(CreateProductDto dto)
+    public async Task<IActionResult> CreatedAsync([FromForm] CreateProductDto dto)
     {
         ProductModel product = new()
         {
             NumSold = dto.NumSold,
-            images = dto.images,
+            ImageFiles = dto.ImageFiles,
             ratingsQuantity = dto.ratingsQuantity,
             title = dto.title,
             description = dto.description,
-            quantity = dto.quantity,
             price = dto.price,
-            imageCover = dto.imageCover,
+            ImageCoverFile = dto.ImageCoverFile,
             CategoryID = dto.CategoryID,
             BrandID = dto.BrandID
         };
 
         var createdProduct = await _productService.CreatedAsync(product);
 
-        return Ok(createdProduct);
+        return Ok(new { message = "Product created successfully!", data = createdProduct });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        if(id == null)
+        if (id == null)
         {
             return NotFound();
         }

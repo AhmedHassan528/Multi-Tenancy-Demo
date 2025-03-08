@@ -2,10 +2,11 @@
 {
     public interface IWishListServices
     {
-        Task<IReadOnlyList<WishListModel>> GetWishListAsync(string userId);
-        Task<string> AddToWithListAsync(string userId, int productId);
-        Task<string> DeleteWishListById (string userId, int productId);
-        Task<string> DeleteAllWishList(string userId);
+        Task<WishListModel> GetWishlistAsync(string userId);
+        Task<WishListModel> AddToWishlistAsync(string userId, int productId);
+        Task<WishListModel> RemoveFromWishlistAsync(string userId, int productId);
+        Task<bool> ClearWishlistAsync(string userId);
+        Task<List<ProductModel>> GetAllProductinWishList(string userId);
 
     }
 }

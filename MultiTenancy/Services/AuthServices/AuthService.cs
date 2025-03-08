@@ -1,10 +1,10 @@
 ﻿
-using Authentication_With_JWT.Helper;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Authentication_With_JWT.Helper;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Authentication_With_JWT.Services
 {
@@ -31,7 +31,7 @@ namespace Authentication_With_JWT.Services
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
                 return new AuthModel { Message = "Email is already registered!" };
             if (await _userManager.FindByNameAsync(model.UserName) is not null)
-                return new AuthModel { Message = "Username is already taken!" };    
+                return new AuthModel { Message = "Username is already taken!" };
 
             var user = new AppUser
             {
@@ -45,8 +45,8 @@ namespace Authentication_With_JWT.Services
 
 
             // Send Email
-            var EmailSend = await _sendMail.SendEmailAsync(model.Email, "Confirmation Your Account","", "ConfirmEmail");
-            if (!string.IsNullOrEmpty(EmailSend)) 
+            var EmailSend = await _sendMail.SendEmailAsync(model.Email, "Confirmation Your Account", "", "ConfirmEmail");
+            if (!string.IsNullOrEmpty(EmailSend))
             {
                 await _userManager.DeleteAsync(user);
                 return new AuthModel { Message = "something error when sending email" };
@@ -101,13 +101,13 @@ namespace Authentication_With_JWT.Services
         public async Task<string> AddRoleAsync(AddRoleModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if(user is null || user.Id != model.Userid)
+            if (user is null || user.Id != model.Userid)
                 return "User id or email are incorrect";
 
-            if(!await _roleManager.RoleExistsAsync(model.Role))
+            if (!await _roleManager.RoleExistsAsync(model.Role))
                 return "Role does not exist";
 
-            if(await _userManager.IsInRoleAsync(user, model.Role))
+            if (await _userManager.IsInRoleAsync(user, model.Role))
                 return "User already has this role";
 
             var result = await _userManager.AddToRoleAsync(user, model.Role);

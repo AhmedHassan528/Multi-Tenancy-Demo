@@ -4,7 +4,7 @@
     {
         Task<CategoryModel> CreatedAsync(CategoryModel category);
         Task<CategoryModel?> GetByIdAsync(int id);
-        Task<string> DeleteCategory (int id);
+        Task<string> DeleteCategory(int id);
         Task<IReadOnlyList<CategoryModel>> GetAllAsync();
     }
 }

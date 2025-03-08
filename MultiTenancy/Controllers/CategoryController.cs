@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MultiTenancy.Data;
-using MultiTenancy.Dtos;
-using MultiTenancy.Models;
-using MultiTenancy.Services.CategoriesServices;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace MultiTenancy.Controllers
 {
@@ -42,12 +32,12 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateCategory (CreateCategoryDto dto)
+        public async Task<IActionResult> CreateCategory([FromForm]CreateCategoryDto dto)
         {
             CategoryModel category = new()
             {
                 Name = dto.Name,
-                image = dto.image
+                ImageFiles = dto.ImageFiles
             };
             var createdProduct = await _categoriesServices.CreatedAsync(category);
             return Ok(createdProduct);
@@ -57,9 +47,9 @@ namespace MultiTenancy.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            if (id != null) 
+            if (id != null)
             {
-               var message = await _categoriesServices.DeleteCategory(id);
+                var message = await _categoriesServices.DeleteCategory(id);
                 return Ok(message);
             }
             return NotFound();

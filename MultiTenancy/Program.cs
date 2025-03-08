@@ -2,6 +2,7 @@ using System.Text;
 using Authentication_With_JWT.Helper;
 using Authentication_With_JWT.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenancy.ConfigureServices;
 
@@ -16,7 +17,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<A
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoriesServices, CategoriesServices>();
-builder.Services.AddScoped<IBrandServices,BrandServices>();
+builder.Services.AddScoped<IBrandServices, BrandServices>();
 builder.Services.AddScoped<IWishListServices, WishListServices>();
 builder.Services.AddScoped<IAddressServices, AddressServices>();
 builder.Services.AddScoped<ICartServices, CartServices>();
@@ -53,8 +54,10 @@ builder.Services.AddAuthentication(op =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
     });
+
 
 
 builder.Services.AddControllers();
@@ -68,6 +71,32 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowAnyHeader()
 );
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ProductCoverImages")),
+    RequestPath = "/ProductCoverImages"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BrandImages")),
+    RequestPath = "/BrandImages"
+});
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "CategoryImages")),
+    RequestPath = "/CategoryImages"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ProductImages")),
+    RequestPath = "/ProductImages"
+});
 
 app.UseHttpsRedirection();
 
