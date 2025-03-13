@@ -26,6 +26,9 @@ public class ProductModel : IMustHaveTenant
     [Required]
     public decimal price { get; set; }
 
+    public int viewCount { get; set; } = 0;
+
+
     public string? imageCover { get; set; }
     [NotMapped]
     [JsonIgnore]
@@ -36,7 +39,7 @@ public class ProductModel : IMustHaveTenant
     public List<IFormFile> ImageFiles { get; set; }
 
     [JsonIgnore]
-    public string TenantId { get; set; } = null!;
+    public string? TenantId { get; set; } = null!;
 
 
 

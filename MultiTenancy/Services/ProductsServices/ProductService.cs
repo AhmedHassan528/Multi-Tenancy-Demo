@@ -11,6 +11,7 @@ public class ProductService : IProductService
     {
         _context = context;
         this.hosting = hosting;
+
     }
 
     public async Task<ProductModel> CreatedAsync(ProductModel product)
@@ -21,19 +22,8 @@ public class ProductService : IProductService
         {
             if (product.ImageCoverFile != null)
             {
-                string ImageFolder = Path.Combine(hosting.WebRootPath, "ProductCoverImages");
-
-                string fileExtension = Path.GetExtension(product.ImageCoverFile.FileName);
-                string fileName = Guid.NewGuid().ToString() + fileExtension;
-                string imagePath = Path.Combine(ImageFolder, fileName);
-
-                using (var stream = new FileStream(imagePath, FileMode.Create))
-                {
-                    product.ImageCoverFile.CopyTo(stream);
-                }
-
-                // Store the full URL instead of just the file name
-                product.imageCover = $"https://localhost:7060/ProductCoverImages/{fileName}";
+                var coverFilePath = await SaveFileAsync(product.ImageCoverFile, "ProductCoverImages");
+                product.imageCover = coverFilePath;
             }
             else
             {
@@ -48,17 +38,8 @@ public class ProductService : IProductService
             {
                 foreach (var file in product.ImageFiles)
                 {
-                    string fileExtension = Path.GetExtension(file.FileName);
-                    string fileName = $"{Guid.NewGuid()}{fileExtension}";
-                    string imagePath = Path.Combine(imageFolder, fileName);
-
-                    using (var stream = new FileStream(imagePath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
-
-                    savedFilePaths.Add(imagePath);
-                    imageUrls.Add($"https://localhost:7060/ProductImages/{fileName}");
+                    var filePath = await SaveFileAsync(file, "ProductImages");
+                    imageUrls.Add(filePath);
                 }
             }
             product.Images = imageUrls;
@@ -148,6 +129,85 @@ public class ProductService : IProductService
         if (product == null)
             return null;
 
+        product.viewCount++;
+        await _context.SaveChangesAsync();
+
         return product;
     }
+
+    public async Task<ProductModel> UpdateProductAsync(int id, ProductModel productModel, IFormFile imageCoverFile, List<IFormFile> imageFiles)
+    {
+        if (productModel == null) throw new ArgumentNullException(nameof(productModel));
+
+        var existingProduct = await _context.Products
+            .Include(p => p.category)
+            .Include(p => p.Brand)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (existingProduct == null)
+        {
+            throw new ArgumentException("Product not found", nameof(id));
+        }
+
+        // Update scalar properties
+        existingProduct.NumSold = productModel.NumSold;
+        existingProduct.ratingsQuantity = productModel.ratingsQuantity;
+        existingProduct.title = productModel.title;
+        existingProduct.description = productModel.description;
+        existingProduct.price = productModel.price;
+        existingProduct.viewCount = productModel.viewCount;
+        existingProduct.CategoryID = productModel.CategoryID;
+        existingProduct.BrandID = productModel.BrandID;
+
+        // Handle ImageCoverFile
+        if (imageCoverFile != null && imageCoverFile.Length > 0)
+        {
+            var coverFilePath = await SaveFileAsync(imageCoverFile, "ProductCoverImages");
+            existingProduct.imageCover = coverFilePath;
+        }
+
+        // Handle ImageFiles
+        if (imageFiles != null && imageFiles.Any())
+        {
+            var imagePaths = new List<string>();
+            foreach (var file in imageFiles)
+            {
+                if (file.Length > 0)
+                {
+                    var filePath = await SaveFileAsync(file, "ProductImages");
+                    imagePaths.Add(filePath);
+                }
+            }
+            existingProduct.Images = imagePaths; 
+        }
+
+        _context.Entry(existingProduct).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+
+        return existingProduct;
+    }
+
+    private async Task<string> SaveFileAsync(IFormFile file, string folder)
+    {
+        if (file == null || file.Length == 0) throw new ArgumentException("File is empty", nameof(file));
+
+        var uploadsFolder = Path.Combine(hosting.WebRootPath, folder);
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+        var FinalPath = Path.Combine(folder, fileName).Replace("\\", "/");
+        // Return relative path for storage
+        return $"https://localhost:7060/{FinalPath}";
+    }
 }
+
+

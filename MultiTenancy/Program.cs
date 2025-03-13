@@ -1,6 +1,7 @@
 using System.Text;
 using Authentication_With_JWT.Helper;
 using Authentication_With_JWT.Setting;
+using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -8,12 +9,21 @@ using MultiTenancy.ConfigureServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// admin handel
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
+
 // Add services to the container.
 var configuration = builder.Configuration;
 builder.Services.Configure<JWT>(configuration.GetSection("JWT"));
 builder.Services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
-builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
+
+// add tenant configuration
+builder.Services.AddTenancy(builder.Configuration);
+builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoriesServices, CategoriesServices>();
@@ -21,14 +31,11 @@ builder.Services.AddScoped<IBrandServices, BrandServices>();
 builder.Services.AddScoped<IWishListServices, WishListServices>();
 builder.Services.AddScoped<IAddressServices, AddressServices>();
 builder.Services.AddScoped<ICartServices, CartServices>();
-
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISendMail, SendMail>();
 builder.Services.AddHttpContextAccessor();
 
-// add tenant configuration
-builder.Services.AddTenancy(builder.Configuration);
+
 
 // add jwt configuration
 builder.Services.AddAuthentication(op =>
@@ -61,6 +68,16 @@ builder.Services.AddControllers()
 
 
 builder.Services.AddControllers();
+
+
+// Register OpenAI client
+var openAiConfig = builder.Configuration.GetSection("OpenAI");
+builder.Services.AddSingleton(sp =>
+    new OpenAIClient(
+        new Uri(openAiConfig["Endpoint"]),
+        new Azure.AzureKeyCredential(openAiConfig["ApiKey"])
+    )
+);
 
 var app = builder.Build();
 

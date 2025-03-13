@@ -3,11 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MultiTenancy.Models
 {
-    public class CartItemModel
+    public class CartItemModel : IMustHaveTenant
     {
         [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
+        public int Id { get; set; }
         [Required]
         public int Count { get; set; }
 
@@ -22,7 +21,10 @@ namespace MultiTenancy.Models
 
         // Foreign key to Cart
         [ForeignKey("CartModel")]
-        public string CartId { get; set; }
+        public int CartId { get; set; }
         public virtual CartModel? Cart { get; set; }
+
+        public string TenantId { get; set; } = null!;
+
     }
 }

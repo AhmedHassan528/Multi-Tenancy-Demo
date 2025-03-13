@@ -268,27 +268,6 @@ namespace MultiTenancy.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("MultiTenancy.Models.AuthModels.WishListModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ProductsIDs")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WishLists");
-                });
-
             modelBuilder.Entity("MultiTenancy.Models.BrandModel", b =>
                 {
                     b.Property<int>("Id")
@@ -315,12 +294,14 @@ namespace MultiTenancy.Migrations
 
             modelBuilder.Entity("MultiTenancy.Models.CartItemModel", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Property<string>("CartId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Count")
                         .HasColumnType("int");
@@ -330,6 +311,10 @@ namespace MultiTenancy.Migrations
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -342,8 +327,11 @@ namespace MultiTenancy.Migrations
 
             modelBuilder.Entity("MultiTenancy.Models.CartModel", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CartOwner")
                         .IsRequired()
@@ -391,6 +379,78 @@ namespace MultiTenancy.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ShippingAddressId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShippingAddressId");
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("OrderItems");
+                });
+
             modelBuilder.Entity("MultiTenancy.Models.ProductModel", b =>
                 {
                     b.Property<int>("Id")
@@ -423,6 +483,9 @@ namespace MultiTenancy.Migrations
                     b.Property<string>("imageCover")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("numSold")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("price")
                         .HasColumnType("decimal(18,2)");
 
@@ -434,6 +497,9 @@ namespace MultiTenancy.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("viewCount")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BrandID");
@@ -441,6 +507,31 @@ namespace MultiTenancy.Migrations
                     b.HasIndex("CategoryID");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("MultiTenancy.Models.WishListModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProductsIDs")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WishLists");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -513,6 +604,36 @@ namespace MultiTenancy.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.Order", b =>
+                {
+                    b.HasOne("MultiTenancy.Models.AddressModel", "ShippingAddress")
+                        .WithMany()
+                        .HasForeignKey("ShippingAddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ShippingAddress");
+                });
+
+            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.OrderItem", b =>
+                {
+                    b.HasOne("MultiTenancy.Models.CheckOutModels.Order", "Order")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MultiTenancy.Models.ProductModel", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("MultiTenancy.Models.ProductModel", b =>
                 {
                     b.HasOne("MultiTenancy.Models.BrandModel", "Brand")
@@ -531,6 +652,11 @@ namespace MultiTenancy.Migrations
             modelBuilder.Entity("MultiTenancy.Models.CartModel", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.Order", b =>
+                {
+                    b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618
         }

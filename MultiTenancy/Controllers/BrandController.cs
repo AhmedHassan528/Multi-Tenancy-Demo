@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MultiTenancy.Controllers
 {
@@ -31,6 +32,8 @@ namespace MultiTenancy.Controllers
             return Ok(brandModel);
         }
 
+        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateBrand([FromForm]CreateBrandDto dto)
         {
@@ -44,6 +47,8 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBrand(int id)
         {
             if (id != null)

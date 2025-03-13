@@ -1,6 +1,6 @@
 ﻿@host = https://localhost:7060
 
-GET {{host}}/api/Category/1
+GET {{host}}/api/products
 tenant: linkedIn
 
 ###

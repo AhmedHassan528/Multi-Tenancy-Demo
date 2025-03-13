@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace Authentication_With_JWT.Controllers
@@ -115,6 +116,23 @@ namespace Authentication_With_JWT.Controllers
 
             return "Password changed";
         }
+
+
+        [HttpPost("AddRoleToUser")]
+        [Authorize]
+        public async Task<IActionResult> AddRoleToUser([FromHeader] string AdminID , [FromHeader] string userEmail)
+        {
+            if (AdminID == null || userEmail == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            var result = await _authService.setAdminRole(AdminID, userEmail);
+            if (!string.IsNullOrEmpty(result))
+                return BadRequest(result);
+            return Ok("user is now Admin");
+        }
+
 
     }
 }

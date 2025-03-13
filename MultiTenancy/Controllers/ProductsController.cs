@@ -53,15 +53,54 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Product created successfully!", data = createdProduct });
     }
 
-    [HttpDelete]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        if (id == null)
+        if (id == 0)
         {
             return NotFound();
         }
-        var result = await _productService.DeleteProduct(id);
+        try
+        {
+            var result = await _productService.DeleteProduct(id);
+            return Ok(result);
 
-        return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"error: {ex.Message}");
+
+        }
+
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductModel productModel)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var updatedProduct = await _productService.UpdateProductAsync(
+                id,
+                productModel,
+                productModel.ImageCoverFile,
+                productModel.ImageFiles ?? new List<IFormFile>()
+            );
+            //return Ok(updatedProduct);
+            return Ok(new { message = "Product Updated successfully!", data = updatedProduct });
+
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Internal server error: {ex.Message}");
+        }
     }
 }

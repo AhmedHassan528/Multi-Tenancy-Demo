@@ -23,6 +23,17 @@ namespace MultiTenancy.Services.BrandServices
 
                 if (brand.ImageFiles != null)
                 {
+                    if (string.IsNullOrEmpty(hosting.WebRootPath))
+                    {
+                        hosting.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    }
+
+                    // Ensure wwwroot folder exists
+                    if (!Directory.Exists(hosting.WebRootPath))
+                    {
+                        Directory.CreateDirectory(hosting.WebRootPath);
+                    }
+
                     string ImageFolder = Path.Combine(hosting.WebRootPath, "BrandImages");
 
                     string fileExtension = Path.GetExtension(brand.ImageFiles.FileName);

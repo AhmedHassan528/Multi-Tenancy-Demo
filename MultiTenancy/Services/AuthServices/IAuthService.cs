@@ -8,7 +8,6 @@
         Task<string> ConfirmEmail(string userId, string token);
         Task<string> ForgotPasswordConfermationModel(ForgotPasswordConfermationModel model);
         Task<string> DeleteAccount(string error, string email);
-
-
+        Task<string> setAdminRole(string AdminID, string userEmail);
     }
 }

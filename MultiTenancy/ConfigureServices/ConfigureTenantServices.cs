@@ -8,6 +8,8 @@ public static class ConfigureTenantServices
         ConfigurationManager configuration)
     {
         services.AddScoped<ITenantService, TenantService>();
+        services.AddHttpContextAccessor();
+
 
         services.Configure<TenantSettings>(configuration.GetSection(nameof(TenantSettings)));
 

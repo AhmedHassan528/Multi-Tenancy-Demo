@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MultiTenancy.Models.CheckOutModels;
 
 namespace MultiTenancy.Data;
 
@@ -20,24 +21,30 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<CategoryModel> Categories { get; set; }
     public DbSet<WishListModel> WishLists { get; set; }
     public DbSet<AddressModel> Addresses { get; set; }
-
     public DbSet<CartModel> Carts { get; set; }
     public DbSet<CartItemModel> CartItemes { get; set; }
 
-
-
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ProductModel>().HasQueryFilter(e => e.TenantId == TenantId);
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<BrandModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<CategoryModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<WishListModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<AddressModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<CartModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<CartItemModel>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<Order>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<OrderItem>().HasQueryFilter(e => e.TenantId == TenantId);
 
-        modelBuilder.Entity<ProductModel>()
-            .Property(p => p.Images)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
-            );
+
+        modelBuilder.Entity<ProductModel>().Property(p => p.Images)
+        .HasConversion(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+            v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+        );
 
         modelBuilder.Entity<CartModel>()
             .HasMany(c => c.Products)
@@ -51,23 +58,18 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .HasForeignKey(ci => ci.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        //modelBuilder.Entity<Wishlist>()
-        //    .HasMany(w => w.WishlistItems)
-        //    .WithOne(wi => wi.Wishlist)
-        //    .HasForeignKey(wi => wi.WishlistId)
-        //    .OnDelete(DeleteBehavior.Cascade);
-
+        base.OnModelCreating(modelBuilder);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var tenantConnectionString = _tenantService.GetConnectionString();
 
-        if (!string.IsNullOrWhiteSpace(tenantConnectionString))
+        if(!string.IsNullOrWhiteSpace(tenantConnectionString))
         {
             var dbProvider = _tenantService.GetDatabaseProvider();
 
-            if (dbProvider?.ToLower() == "mssql")
+            if(dbProvider?.ToLower() == "mssql")
             {
                 optionsBuilder.UseSqlServer(tenantConnectionString);
             }
