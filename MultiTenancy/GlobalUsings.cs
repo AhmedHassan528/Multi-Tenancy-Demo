@@ -13,6 +13,7 @@ global using MultiTenancy.Services.CategoriesServices;
 global using MultiTenancy.Services.ProductsServices;
 global using MultiTenancy.Settings;
 global using MultiTenancy.Services.WishListServices;
+global using MultiTenancy.Models.CheckOutModels;
 
 
 

@@ -4,12 +4,10 @@ namespace MultiTenancy.ConfigureServices;
 
 public static class ConfigureTenantServices
 {
-    public static IServiceCollection AddTenancy(this IServiceCollection services,
-        ConfigurationManager configuration)
+    public static IServiceCollection AddTenancy(this IServiceCollection services, ConfigurationManager configuration)
     {
         services.AddScoped<ITenantService, TenantService>();
         services.AddHttpContextAccessor();
-
 
         services.Configure<TenantSettings>(configuration.GetSection(nameof(TenantSettings)));
 
@@ -20,16 +18,20 @@ public static class ConfigureTenantServices
 
         if (defaultDbProvider.ToLower() == "mssql")
         {
-            services.AddDbContext<ApplicationDbContext>(m => m.UseSqlServer());
+            services.AddDbContext<ApplicationDbContext>((serviceProvider, dbOptions) =>
+            {
+                var tenantService = serviceProvider.GetRequiredService<ITenantService>();
+                var connectionString = tenantService.GetConnectionString();
+                dbOptions.UseSqlServer(connectionString);
+            });
         }
 
+        // Apply migrations (run once at startup, not per request)
+        using var scope = services.BuildServiceProvider().CreateScope();
         foreach (var tenant in options.Tenants)
         {
             var connectionString = tenant.ConnectionString ?? options.Defaults.ConnectionString;
-
-            using var scope = services.BuildServiceProvider().CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
             dbContext.Database.SetConnectionString(connectionString);
 
             if (dbContext.Database.GetPendingMigrations().Any())

@@ -12,8 +12,8 @@ using MultiTenancy.Data;
 namespace MultiTenancy.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250311024513_OrdersHande2")]
-    partial class OrdersHande2
+    [Migration("20250314122742_tsad2585s2")]
+    partial class tsad2585s2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -393,13 +393,17 @@ namespace MultiTenancy.Migrations
                     b.Property<int>("AddressId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CartOwner")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ShippingAddressId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
+                    b.Property<string>("PaymentIntentId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -407,16 +411,14 @@ namespace MultiTenancy.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("TotalPrice")
+                    b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShippingAddressId");
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex("CartId");
 
                     b.ToTable("Orders");
                 });
@@ -429,6 +431,9 @@ namespace MultiTenancy.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
@@ -438,8 +443,9 @@ namespace MultiTenancy.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -475,7 +481,6 @@ namespace MultiTenancy.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("TenantId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("description")
@@ -606,19 +611,27 @@ namespace MultiTenancy.Migrations
 
             modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.Order", b =>
                 {
-                    b.HasOne("MultiTenancy.Models.AddressModel", "ShippingAddress")
+                    b.HasOne("MultiTenancy.Models.AddressModel", "Address")
                         .WithMany()
-                        .HasForeignKey("ShippingAddressId")
+                        .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ShippingAddress");
+                    b.HasOne("MultiTenancy.Models.CartModel", "Cart")
+                        .WithMany()
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Address");
+
+                    b.Navigation("Cart");
                 });
 
             modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.OrderItem", b =>
                 {
                     b.HasOne("MultiTenancy.Models.CheckOutModels.Order", "Order")
-                        .WithMany("OrderItems")
+                        .WithMany()
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -652,11 +665,6 @@ namespace MultiTenancy.Migrations
             modelBuilder.Entity("MultiTenancy.Models.CartModel", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("MultiTenancy.Models.CheckOutModels.Order", b =>
-                {
-                    b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618
         }

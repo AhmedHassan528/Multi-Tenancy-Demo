@@ -12,8 +12,8 @@ using MultiTenancy.Data;
 namespace MultiTenancy.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250310185653_OrdersHandel")]
-    partial class OrdersHandel
+    [Migration("20250314121230_tsad2585s")]
+    partial class tsad2585s
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -475,7 +475,6 @@ namespace MultiTenancy.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("TenantId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("description")
@@ -496,6 +495,9 @@ namespace MultiTenancy.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("viewCount")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
