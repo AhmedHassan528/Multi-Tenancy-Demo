@@ -43,7 +43,7 @@ namespace MultiTenancy.Services.CartServices
                 {
                     ProductId = productId,
                     Count = quantity,
-                    Price = product.price
+                    Price = product.Price
                 });
             }
 
@@ -81,7 +81,7 @@ namespace MultiTenancy.Services.CartServices
                 .AsNoTracking()
                 .Include(c => c.Products)
                     .ThenInclude(ci => ci.Product)
-                        .ThenInclude(p => p.category)
+                        .ThenInclude(p => p.Category)
                 .Include(c => c.Products)
                     .ThenInclude(ci => ci.Product)
                         .ThenInclude(p => p.Brand)

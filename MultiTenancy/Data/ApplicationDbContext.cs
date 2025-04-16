@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MultiTenancy.Models.CheckOutModels;
+using MultiTenancy.Models.traffic;
 
 namespace MultiTenancy.Data;
 
@@ -26,6 +27,9 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
 
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Items> Items { get; set; }
+    
+    public DbSet<Traffic> traffics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,6 +42,10 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
         modelBuilder.Entity<CartItemModel>().HasQueryFilter(e => e.TenantId == TenantId);
         modelBuilder.Entity<Order>().HasQueryFilter(e => e.TenantId == TenantId);
         modelBuilder.Entity<OrderItem>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<Items>().HasQueryFilter(e => e.TenantId == TenantId);
+        modelBuilder.Entity<Traffic>().HasQueryFilter(e => e.TenantId == TenantId);
+
+
 
 
         modelBuilder.Entity<ProductModel>().Property(p => p.Images)

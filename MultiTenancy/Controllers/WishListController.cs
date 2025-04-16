@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MultiTenancy.Services.TrafficServices;
 using MultiTenancy.Services.WishListServices;
 
 namespace MultiTenancy.Controllers
@@ -11,14 +12,23 @@ namespace MultiTenancy.Controllers
     public class WishListController : ControllerBase
     {
         private readonly IWishListServices _wishList;
+        private readonly ITrafficServices _trafficServices;
 
-        public WishListController(IWishListServices wishList)
+        public WishListController(IWishListServices wishList, ITrafficServices trafficServices)
         {
             _wishList = wishList;
+            _trafficServices = trafficServices;
         }
         [HttpGet("Product")]
-        public async Task<IActionResult> GetWishlistProducts([FromHeader] string userId)
+        public async Task<IActionResult> GetWishlistProducts()
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (userId == null)
+            {
+                return NotFound();
+            }
             try
             {
                 var Products = await _wishList.GetAllProductinWishList(userId);
@@ -31,8 +41,15 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetWishlist([FromHeader] string userId)
+        public async Task<IActionResult> GetWishlist()
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (userId == null)
+            {
+                return NotFound();
+            }
             try
             {
                 var wishlist = await _wishList.GetWishlistAsync(userId);
@@ -45,8 +62,15 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpPost("add/{ProductId}")]
-        public async Task<IActionResult> AddToWishlist([FromHeader] string userId, int ProductId)
+        public async Task<IActionResult> AddToWishlist(int ProductId)
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (userId == null)
+            {
+                return NotFound();
+            }
             try
             {
                 var wishlist = await _wishList.AddToWishlistAsync(userId, ProductId);
@@ -59,8 +83,15 @@ namespace MultiTenancy.Controllers
         }
 
         [HttpDelete("remove/{ProductId}")]
-        public async Task<IActionResult> RemoveFromWishlist([FromHeader] string userId, int ProductId)
+        public async Task<IActionResult> RemoveFromWishlist(int ProductId)
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (userId == null)
+            {
+                return NotFound();
+            }
             try
             {
                 var wishlist = await _wishList.RemoveFromWishlistAsync(userId, ProductId);
@@ -74,8 +105,15 @@ namespace MultiTenancy.Controllers
 
         // Clear Wishlist
         [HttpDelete("clear")]
-        public async Task<IActionResult> ClearWishlist([FromHeader] string userId)
+        public async Task<IActionResult> ClearWishlist()
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (userId == null)
+            {
+                return NotFound();
+            }
             try
             {
                 var success = await _wishList.ClearWishlistAsync(userId);

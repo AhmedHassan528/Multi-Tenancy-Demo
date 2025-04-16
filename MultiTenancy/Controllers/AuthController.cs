@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using MultiTenancy.Services.TrafficServices;
 
 namespace Authentication_With_JWT.Controllers
 {
@@ -11,15 +12,20 @@ namespace Authentication_With_JWT.Controllers
         private readonly IAuthService _authService;
         private readonly ISendMail _sendMail;
         private readonly UserManager<AppUser> _userManager;
-        public AuthController(IAuthService authService, ISendMail sendMail, UserManager<AppUser> userManager)
+        private readonly ITrafficServices _trafficServices;
+
+        public AuthController(IAuthService authService, ISendMail sendMail, UserManager<AppUser> userManager, ITrafficServices trafficServices)
         {
             _authService = authService;
             _sendMail = sendMail;
             _userManager = userManager;
+            _trafficServices = trafficServices;
         }
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model, [FromHeader] string? ReqUrl)
         {
+            await _trafficServices.AddReqCountAsync();
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -36,6 +42,8 @@ namespace Authentication_With_JWT.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            await _trafficServices.AddReqCountAsync();
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -51,6 +59,8 @@ namespace Authentication_With_JWT.Controllers
         [HttpPost("AddRole")]
         public async Task<IActionResult> AddRole([FromBody] AddRoleModel model)
         {
+            await _trafficServices.AddReqCountAsync();
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -67,6 +77,8 @@ namespace Authentication_With_JWT.Controllers
         [HttpPost("ConfirmEmail")]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
+            await _trafficServices.AddReqCountAsync();
+
             var user = await _userManager.FindByIdAsync(userId);
             if (userId == null || token == null)
             {
@@ -86,42 +98,53 @@ namespace Authentication_With_JWT.Controllers
 
         }
         [HttpPost("ForgotPassword")]
-        public async Task<string> ForgotPassword([FromBody] string email)
+        public async Task<IActionResult> ForgotPassword([FromBody] string email, [FromHeader] string ReqUrl)
         {
+            await _trafficServices.AddReqCountAsync();
+
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                return "User not found";
+                return BadRequest("User not found");
             }
             else
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var result = await _sendMail.SendEmailAsync(email, "Reset Password", token, "ForgotPasswordConfermation", null);
-                return result;
+                var result = await _sendMail.SendEmailAsync(email, "Reset Password", token, "ForgotPasswordConfermation", ReqUrl);
+                return Ok(result);
             }
         }
-
         [HttpPost("ForgotPasswordConfermation")]
-        public async Task<string> ForgotPasswordConfermation([FromBody] ForgotPasswordConfermationModel model)
+        public async Task<IActionResult> ForgotPasswordConfermation([FromBody] ForgotPasswordConfermationModel model)
         {
+            await _trafficServices.AddReqCountAsync();
+
             if (model.newPassword != model.confirmPassword)
             {
-                return "Password not match";
+                return BadRequest("Password not match");
             }
 
             var result = await _authService.ForgotPasswordConfermationModel(model);
 
             if (!string.IsNullOrEmpty(result))
-                return result;
+                return BadRequest(result);
 
-            return "Password changed";
+            return Ok("Password changed");
+
         }
+
+
 
 
         [HttpPost("AddRoleToUser")]
         [Authorize]
-        public async Task<IActionResult> AddRoleToUser([FromHeader] string AdminID , [FromHeader] string userEmail)
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> AddRoleToUser([FromHeader] string userEmail)
         {
+            await _trafficServices.AddReqCountAsync();
+
+            var AdminID = User.FindFirst("uid")?.Value;
             if (AdminID == null || userEmail == null)
             {
                 return BadRequest("User not found");
@@ -131,6 +154,30 @@ namespace Authentication_With_JWT.Controllers
             if (!string.IsNullOrEmpty(result))
                 return BadRequest(result);
             return Ok("user is now Admin");
+        }
+
+        [HttpGet("GetAllUsersAsync")]
+        [Authorize]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsersAsync()
+        {
+            await _trafficServices.AddReqCountAsync();
+
+            var AdminID = User.FindFirst("uid")?.Value;
+            if (AdminID == null)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var result = await _authService.GetAllUsersAsync(AdminID);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
 

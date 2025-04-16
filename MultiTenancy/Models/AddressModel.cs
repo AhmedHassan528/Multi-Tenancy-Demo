@@ -11,7 +11,7 @@ namespace MultiTenancy.Models
         public int Id { get; set; }
         [Required]
         [JsonIgnore]
-        public string userID { get; set; }
+        public string UserID { get; set; }
         [Required]
         [MaxLength(20)]
         public string AddressName { get; set; }
@@ -23,7 +23,7 @@ namespace MultiTenancy.Models
         public string Address { get; set; }
         [Required]
         [RegularExpression(@"\d{11}$", ErrorMessage = "Phone number must start with +20 and be 11 digits long.")]
-        public string phoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
 
         [JsonIgnore]
         public string TenantId { get; set; } = null!;

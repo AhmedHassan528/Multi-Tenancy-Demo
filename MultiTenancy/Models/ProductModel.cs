@@ -14,22 +14,24 @@ public class ProductModel : IMustHaveTenant
     public int NumSold { get; set; }
 
     [Required]
-    public double ratingsQuantity { get; set; }
+    public double RatingsQuantity { get; set; }
     [Required]
     [StringLength(50, ErrorMessage = "Title cannot exceed 50 characters.")]
-    public string title { get; set; }
+    public string Title { get; set; }
 
     [Required]
     [StringLength(500, ErrorMessage = "Title cannot exceed 50 characters.")]
-    public string description { get; set; }
+    public string Description { get; set; }
 
     [Required]
-    public decimal price { get; set; }
+    public decimal Price { get; set; }
 
-    public int viewCount { get; set; } = 0;
+    public int ViewCount { get; set; } = 0;
+    public int LikeCount { get; set; } = 0;
 
 
-    public string? imageCover { get; set; }
+
+    public string? ImageCover { get; set; }
     [NotMapped]
     [JsonIgnore]
     public IFormFile ImageCoverFile { get; set; }
@@ -46,7 +48,7 @@ public class ProductModel : IMustHaveTenant
     [ForeignKey("CategoryModel")]
     [JsonIgnore]
     public int? CategoryID { get; set; }
-    public virtual CategoryModel? category { get; set; }
+    public virtual CategoryModel? Category { get; set; }
 
     [ForeignKey("BrandModel")]
     [JsonIgnore]

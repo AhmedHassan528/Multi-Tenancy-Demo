@@ -239,6 +239,7 @@ namespace Authentication_With_JWT.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("CustomerName", user.FirstName + " " + user.LastName),
                 new Claim("uid", user.Id)
             }
             .Union(userClaims)
@@ -259,6 +260,34 @@ namespace Authentication_With_JWT.Services
         public Task<string> DeleteAccount(string error, string email)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<IReadOnlyList<UsersDto>> GetAllUsersAsync(string AdminID)
+        {
+            var admin = await _userManager.FindByIdAsync(AdminID);
+            if (admin == null || !await _userManager.IsInRoleAsync(admin, "Admin"))
+            {
+                return new List<UsersDto>();
+            }
+
+            var users = _userManager.Users.ToList();
+            var usersDto = new List<UsersDto>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                usersDto.Add(new UsersDto
+                {
+                    ID = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    email = user.Email,
+                    UserRoles = roles.ToList(),
+                    PhoneNumber = user.PhoneNumber
+                });
+            }
+
+            return usersDto;
         }
     }
 }

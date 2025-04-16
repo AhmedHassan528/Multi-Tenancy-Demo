@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MultiTenancy.Settings;
 
 namespace MultiTenancy.Services.ProductsServices;
 
@@ -23,7 +24,7 @@ public class ProductService : IProductService
             if (product.ImageCoverFile != null)
             {
                 var coverFilePath = await SaveFileAsync(product.ImageCoverFile, "ProductCoverImages");
-                product.imageCover = coverFilePath;
+                product.ImageCover = coverFilePath;
             }
             else
             {
@@ -53,7 +54,7 @@ public class ProductService : IProductService
                 throw new Exception("Invalid Category or Brand");
             }
 
-            product.category = category;
+            product.Category = category;
             product.Brand = brand;
 
             _context.Products.Add(product);
@@ -97,9 +98,9 @@ public class ProductService : IProductService
             }
         }
 
-        if (product.imageCover != null)
+        if (product.ImageCover != null)
         {
-            string fileName = Path.GetFileName(product.imageCover);
+            string fileName = Path.GetFileName(product.ImageCover);
             string imagePath = Path.Combine(hosting.WebRootPath, "ProductCoverImages", fileName);
             if (File.Exists(imagePath))
             {
@@ -107,7 +108,36 @@ public class ProductService : IProductService
             }
         }
 
+        var cartItems = await _context.CartItemes
+                .Where(ci => ci.ProductId == id)
+                .ToListAsync();
+
+        if (cartItems.Any())
+        {
+            _context.CartItemes.RemoveRange(cartItems);
+
+            // Update the TotalCartPrice and UpdatedAt for affected carts
+            var affectedCartIds = cartItems.Select(ci => ci.CartId).Distinct().ToList();
+            var affectedCarts = await _context.Carts
+                .Where(c => affectedCartIds.Contains(c.Id))
+                .ToListAsync();
+
+            foreach (var cart in affectedCarts)
+            {
+                // Recalculate TotalCartPrice based on remaining items
+                var remainingItems = await _context.CartItemes
+                    .Where(ci => ci.CartId == cart.Id)
+                    .ToListAsync();
+
+                cart.TotalCartPrice = remainingItems.Sum(ci => ci.Price * ci.Count);
+                cart.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        // Delete the product
         _context.Products.Remove(product);
+
+        // Save all changes
         await _context.SaveChangesAsync();
 
         return "The product and its images have been deleted successfully";
@@ -115,21 +145,21 @@ public class ProductService : IProductService
 
     public async Task<IReadOnlyList<ProductModel>> GetAllAsync()
     {
-        var pro = await _context.Products.AsNoTracking().Include(p => p.category).Include(p => p.Brand).ToListAsync();
+        var pro = await _context.Products.AsNoTracking().Include(p => p.Category).Include(p => p.Brand).ToListAsync();
         return pro;
     }
 
     public async Task<ProductModel?> GetByIdAsync(int id)
     {
         var product = await _context.Products
-                .Include(p => p.category)
+                .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)
             return null;
 
-        product.viewCount++;
+        product.ViewCount++;
         await _context.SaveChangesAsync();
 
         return product;
@@ -140,7 +170,7 @@ public class ProductService : IProductService
         if (productModel == null) throw new ArgumentNullException(nameof(productModel));
 
         var existingProduct = await _context.Products
-            .Include(p => p.category)
+            .Include(p => p.Category)
             .Include(p => p.Brand)
             .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -151,11 +181,11 @@ public class ProductService : IProductService
 
         // Update scalar properties
         existingProduct.NumSold = productModel.NumSold;
-        existingProduct.ratingsQuantity = productModel.ratingsQuantity;
-        existingProduct.title = productModel.title;
-        existingProduct.description = productModel.description;
-        existingProduct.price = productModel.price;
-        existingProduct.viewCount = productModel.viewCount;
+        existingProduct.RatingsQuantity = productModel.RatingsQuantity;
+        existingProduct.Title = productModel.Title;
+        existingProduct.Description = productModel.Description;
+        existingProduct.Price = productModel.Price;
+        existingProduct.ViewCount = productModel.ViewCount;
         existingProduct.CategoryID = productModel.CategoryID;
         existingProduct.BrandID = productModel.BrandID;
 
@@ -163,7 +193,7 @@ public class ProductService : IProductService
         if (imageCoverFile != null && imageCoverFile.Length > 0)
         {
             var coverFilePath = await SaveFileAsync(imageCoverFile, "ProductCoverImages");
-            existingProduct.imageCover = coverFilePath;
+            existingProduct.ImageCover = coverFilePath;
         }
 
         // Handle ImageFiles

@@ -7,12 +7,11 @@ namespace MultiTenancy.Services.AddressServices
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-        private readonly IProductService _productService;
-        public AddressServices(ApplicationDbContext context, UserManager<AppUser> userManager, IProductService productService)
+
+        public AddressServices(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _productService = productService;
         }
 
         public async Task<AddressModel> AddAddress(string userID, AddresesesDto address)
@@ -23,11 +22,11 @@ namespace MultiTenancy.Services.AddressServices
             }
             AddressModel model = new()
             {
-                userID = userID,
+                UserID = userID,
                 AddressName = address.AddressName,
                 City = address.City,
                 Address = address.Address,
-                phoneNumber = address.phoneNumber
+                PhoneNumber = address.phoneNumber
             };
             _context.Addresses.Add(model);
             await _context.SaveChangesAsync();
@@ -39,7 +38,7 @@ namespace MultiTenancy.Services.AddressServices
             {
                 return null;
             }
-            return await _context.Addresses.Where(x => x.userID == userID).ToListAsync();
+            return await _context.Addresses.Where(x => x.UserID == userID).ToListAsync();
         }
 
         public async Task<AddressModel> GetAddressByID(string userID, int addressID)
@@ -52,7 +51,7 @@ namespace MultiTenancy.Services.AddressServices
             {
                 return null;
             }
-            return await _context.Addresses.AsNoTracking().FirstOrDefaultAsync(x => x.userID == userID && x.Id == addressID);
+            return await _context.Addresses.AsNoTracking().FirstOrDefaultAsync(x => x.UserID == userID && x.Id == addressID);
         }
 
         public async Task<List<AddressModel>> DeleteAddressByID(string userID, int addressID)
@@ -65,14 +64,14 @@ namespace MultiTenancy.Services.AddressServices
             {
                 return null;
             }
-            var address = await _context.Addresses.FirstOrDefaultAsync(x => x.userID == userID && x.Id == addressID);
+            var address = await _context.Addresses.FirstOrDefaultAsync(x => x.UserID == userID && x.Id == addressID);
             if (address == null)
             {
                 return null;
             }
             _context.Addresses.Remove(address);
             await _context.SaveChangesAsync();
-            return await _context.Addresses.AsNoTracking().Where(x => x.userID == userID).ToListAsync();
+            return await _context.Addresses.AsNoTracking().Where(x => x.UserID == userID).ToListAsync();
 
         }
 
@@ -83,7 +82,7 @@ namespace MultiTenancy.Services.AddressServices
             {
                 return "user is not found";
             }
-            var addresses = await _context.Addresses.Where(x => x.userID == userID).ToListAsync();
+            var addresses = await _context.Addresses.Where(x => x.UserID == userID).ToListAsync();
             if (addresses == null)
             {
                 return "no addresses to remove it";

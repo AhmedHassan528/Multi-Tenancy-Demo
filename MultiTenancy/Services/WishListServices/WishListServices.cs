@@ -7,12 +7,10 @@ namespace MultiTenancy.Services.WishListServices
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-        private readonly IProductService _productService;
-        public WishListServices(ApplicationDbContext context, UserManager<AppUser> userManager, IProductService productService)
+        public WishListServices(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _productService = productService;
         }
 
         public async Task<WishListModel> AddToWishlistAsync(string userId, int productId)
@@ -48,6 +46,11 @@ namespace MultiTenancy.Services.WishListServices
                 }
                 wishlist.ProductsIDs.Add(productId);
                 _context.WishLists.Update(wishlist);
+
+                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+                product!.LikeCount++;
+                _context.Products.Update(product);
+
                 await _context.SaveChangesAsync();
                 return wishlist;
             }
@@ -114,7 +117,7 @@ namespace MultiTenancy.Services.WishListServices
                 return new List<ProductModel>();
             }
 
-            var products = await _context.Products.Include(b => b.Brand).Include(c => c.category)
+            var products = await _context.Products.Include(b => b.Brand).Include(c => c.Category)
                                          .Where(p => wishList.ProductsIDs.Contains(p.Id))
                                          .ToListAsync();
 

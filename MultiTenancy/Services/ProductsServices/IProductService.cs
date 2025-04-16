@@ -7,5 +7,6 @@ public interface IProductService
     Task<string> DeleteProduct(int id);
     Task<IReadOnlyList<ProductModel>> GetAllAsync();
     Task<ProductModel> UpdateProductAsync(int id, ProductModel productModel, IFormFile imageCoverFile, List<IFormFile> imageFiles);
+
 }
  

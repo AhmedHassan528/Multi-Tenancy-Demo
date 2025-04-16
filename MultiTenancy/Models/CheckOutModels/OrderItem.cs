@@ -22,13 +22,18 @@ namespace MultiTenancy.Models.CheckOutModels
 
         [Required]
         public int ProductId { get; set; }
-        [JsonIgnore]
-        public virtual ProductModel Product { get; set; }
-
-        // Optional: Store product name for historical reference
         public string ProductName { get; set; }
+        public string ProductImage { get; set; }
+        public string ProductDescription { get; set; }
+        public string Category { get; set; }
+        public string Brand { get; set; }
+        public int? CategoryId { get; set; }
+        public int? BrandId { get; set; }
+
+
 
         [Required]
+        [JsonIgnore]
         public string TenantId { get; set; } = null!;
 
     }

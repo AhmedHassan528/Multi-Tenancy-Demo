@@ -1,6 +1,7 @@
 ﻿using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MultiTenancy.Services.TrafficServices;
 
 namespace MultiTenancy.Controllers
 {
@@ -9,15 +10,19 @@ namespace MultiTenancy.Controllers
     public class ChatController : ControllerBase
     {
         private readonly OpenAIClient _openAiClient;
+        private readonly ITrafficServices _trafficServices;
 
-        public ChatController(OpenAIClient openAiClient)
+        public ChatController(OpenAIClient openAiClient, ITrafficServices trafficServices)
         {
             _openAiClient = openAiClient;
+            _trafficServices = trafficServices;
         }
 
         [HttpPost]
         public async Task<IActionResult> GetChatResponse([FromBody] ChatRequest request)
         {
+            await _trafficServices.AddReqCountAsync();
+
             var options = new ChatCompletionsOptions
             {
                 DeploymentName = "gpt-4o",
