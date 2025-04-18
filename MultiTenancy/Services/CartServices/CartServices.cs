@@ -12,46 +12,54 @@ namespace MultiTenancy.Services.CartServices
         }
         public async Task<CartModel> AddItemToCartAsync(string userId, int productId, int quantity)
         {
-            var product = await _context.Products.FindAsync(productId);
-            if (product == null)
-                throw new Exception("Product not found");
-
-            var cart = await _context.Carts
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.CartOwner == userId);
-
-            if (cart == null)
+            try
             {
-                cart = new CartModel
+                var product = await _context.Products.FindAsync(productId);
+                if (product == null)
+                    throw new Exception("Product not found");
+
+                var cart = await _context.Carts
+                    .Include(c => c.Products)
+                    .FirstOrDefaultAsync(c => c.CartOwner == userId);
+
+                if (cart == null)
                 {
-                    CartOwner = userId,
-                    Products = new List<CartItemModel>(),
-                    TotalCartPrice = 0
-                };
-                _context.Carts.Add(cart);
-            }
+                    cart = new CartModel
+                    {
+                        CartOwner = userId,
+                        Products = new List<CartItemModel>(),
+                        TotalCartPrice = 0
+                    };
+                    _context.Carts.Add(cart);
+                }
 
-            var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
+                var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
 
-            if (cartItem != null)
-            {
-                cartItem.Count += quantity;
-            }
-            else
-            {
-                cart.Products.Add(new CartItemModel
+                if (cartItem != null)
                 {
-                    ProductId = productId,
-                    Count = quantity,
-                    Price = product.Price
-                });
+                    cartItem.Count += quantity;
+                }
+                else
+                {
+                    cart.Products.Add(new CartItemModel
+                    {
+                        ProductId = productId,
+                        Count = quantity,
+                        Price = product.Price
+                    });
+                }
+
+                cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
+                cart.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return cart;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Some thing error in cart");
             }
 
-            cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
-            cart.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return cart;
         }
 
         public async Task<CartModel> RemoveItemFromCartAsync(string userId, int productId)
@@ -77,7 +85,9 @@ namespace MultiTenancy.Services.CartServices
 
         public async Task<CartModel> GetUserCartAsync(string userId)
         {
-            var cart = await _context.Carts
+            try
+            {
+                var cart = await _context.Carts
                 .AsNoTracking()
                 .Include(c => c.Products)
                     .ThenInclude(ci => ci.Product)
@@ -87,78 +97,120 @@ namespace MultiTenancy.Services.CartServices
                         .ThenInclude(p => p.Brand)
                 .FirstOrDefaultAsync(c => c.CartOwner == userId);
 
-            if (cart == null)
-                throw new Exception("Cart not found");
 
-            return cart;
+                if (cart == null)
+                {
+                    cart = new CartModel
+                    {
+                        CartOwner = userId,
+                        Products = new List<CartItemModel>(),
+                        TotalCartPrice = 0
+                    };
+                    _context.Carts.Add(cart);
+                }
+                await _context.SaveChangesAsync();
+
+                return cart;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Some thing error in cart");
+            }
+
 
 
         }
         public async Task<CartModel> IncreaseItemCountAsync(string userId, int productId)
         {
-            var cart = await _context.Carts
+            try
+            {
+                var cart = await _context.Carts
                 .Include(c => c.Products)
                 .FirstOrDefaultAsync(c => c.CartOwner == userId);
 
-            if (cart == null)
-                throw new Exception("Cart not found");
+                if (cart == null)
+                    throw new Exception("Cart not found");
 
-            var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
-            if (cartItem == null)
-                throw new Exception("Product not found in cart");
+                var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
+                if (cartItem == null)
+                    throw new Exception("Product not found in cart");
 
-            cartItem.Count++; // Increase count
-            cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
-            cart.UpdatedAt = DateTime.UtcNow;
+                cartItem.Count++; // Increase count
+                cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
+                cart.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
-            return cart;
+                await _context.SaveChangesAsync();
+                return cart;
+            }
+            catch (Exception)
+            {
+
+                throw new Exception("Some thing error in cart");
+            }
+
         }
 
         public async Task<CartModel> DecreaseItemCountAsync(string userId, int productId)
         {
-            var cart = await _context.Carts
+            try
+            {
+                var cart = await _context.Carts
                 .Include(c => c.Products)
                 .FirstOrDefaultAsync(c => c.CartOwner == userId);
 
-            if (cart == null)
-                throw new Exception("Cart not found");
+                if (cart == null)
+                    throw new Exception("Cart not found");
 
-            var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
-            if (cartItem == null)
-                throw new Exception("Product not found in cart");
+                var cartItem = cart.Products.FirstOrDefault(ci => ci.ProductId == productId);
+                if (cartItem == null)
+                    throw new Exception("Product not found in cart");
 
-            if (cartItem.Count > 1)
-            {
-                cartItem.Count--;
+                if (cartItem.Count > 1)
+                {
+                    cartItem.Count--;
+                }
+                else
+                {
+                    cart.Products.Remove(cartItem);
+                }
+
+                cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
+                cart.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return cart;
             }
-            else
+            catch (Exception)
             {
-                cart.Products.Remove(cartItem);
+
+                throw new Exception("Some thing error in cart");
             }
 
-            cart.TotalCartPrice = cart.Products.Sum(ci => ci.Count * ci.Price);
-            cart.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            return cart;
         }
 
         public async Task<CartModel> ClearCartAsync(string userId)
         {
-            var cart = await _context.Carts
+            try
+            {
+                var cart = await _context.Carts
                 .Include(c => c.Products)
                 .FirstOrDefaultAsync(c => c.CartOwner == userId);
 
-            if (cart == null)
-                throw new Exception("Cart not found");
+                if (cart == null)
+                    throw new Exception("Cart not found");
 
-            cart.Products.Clear(); // Remove all items from cart
-            cart.TotalCartPrice = 0;
-            cart.UpdatedAt = DateTime.UtcNow;
+                cart.Products.Clear(); 
+                cart.TotalCartPrice = 0;
+                cart.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
-            return cart;
+                await _context.SaveChangesAsync();
+                return cart;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Some thing error in cart");
+            }
+
         }
 
     }

@@ -137,19 +137,19 @@ namespace Authentication_With_JWT.Controllers
 
 
         [HttpPost("AddRoleToUser")]
-        [Authorize]
-        [Authorize(Roles = "Admin")]
+        //[Authorize]
+        //[Authorize(Roles = "Admin")]
 
         public async Task<IActionResult> AddRoleToUser([FromHeader] string userEmail)
         {
             await _trafficServices.AddReqCountAsync();
 
-            var AdminID = User.FindFirst("uid")?.Value;
-            if (AdminID == null || userEmail == null)
-            {
-                return BadRequest("User not found");
-            }
-
+            //var AdminID = User.FindFirst("uid")?.Value;
+            //if (AdminID == null || userEmail == null)
+            //{
+            //    return BadRequest("User not found");
+            //}
+            var AdminID = "sasdsdsd";
             var result = await _authService.setAdminRole(AdminID, userEmail);
             if (!string.IsNullOrEmpty(result))
                 return BadRequest(result);

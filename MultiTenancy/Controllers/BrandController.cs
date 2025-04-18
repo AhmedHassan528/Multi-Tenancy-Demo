@@ -11,10 +11,13 @@ namespace MultiTenancy.Controllers
     {
         private readonly ITrafficServices _trafficServices;
         private readonly IBrandServices _brandService;
-        public BrandController(IBrandServices brandService, ITrafficServices trafficServices)
+        private readonly IAuthService _authService;
+
+        public BrandController(IBrandServices brandService, ITrafficServices trafficServices, IAuthService authService)
         {
             _brandService = brandService;
             _trafficServices = trafficServices;
+            _authService = authService;
         }
 
         [HttpGet]
@@ -28,7 +31,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error get Brands try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
 
         }
@@ -40,7 +43,7 @@ namespace MultiTenancy.Controllers
 
             try
             {
-                if (id == null)
+                if (id == 0 )
                 {
                     return NotFound();
                 }
@@ -49,7 +52,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error get Brand try again later!" });
+                return StatusCode(500, new { message = ex.Message });
             }
             
         }
@@ -64,6 +67,13 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
             await _trafficServices.AddBrandCountAsync();
 
+
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
             try
             {
                 BrandModel brand = new()
@@ -76,7 +86,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error create Brand try again later!" });
+                return StatusCode(500, new { message = ex.Message });
             }
 
            
@@ -90,9 +100,16 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
             await _trafficServices.DecreaseBrandCountAsync();
 
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
+
             try
             {
-                if (id != null)
+                if (id != 0)
                 {
                     var message = await _brandService.DeleteBrand(id);
                     return Ok(message);
@@ -101,7 +118,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error delete Brand try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
 
         }
@@ -112,6 +129,12 @@ namespace MultiTenancy.Controllers
         public async Task<IActionResult> EditBrand(int id, [FromForm] BrandDto updateDto)
         {
             await _trafficServices.AddReqCountAsync();
+
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return BadRequest(new { message = "some thing error when get adresses", StatusCode = 400 });
+            }
 
             try
             {
@@ -129,7 +152,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when Edit Brand try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

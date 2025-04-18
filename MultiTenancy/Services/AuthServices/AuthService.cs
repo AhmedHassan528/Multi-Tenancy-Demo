@@ -179,15 +179,7 @@ namespace Authentication_With_JWT.Services
         {
             var admin = await _userManager.FindByIdAsync(AdminID);
 
-            //if (!await _roleManager.RoleExistsAsync("Admin"))
-            //{
-            //    var roleResult = await _roleManager.CreateAsync(new IdentityRole("Admin"));
-            //    if (!roleResult.Succeeded)
-            //    {
-            //        return "Failed to create Admin role";
-            //    }
-            //}
-            //await _userManager.AddToRoleAsync(admin, "Admin");
+
 
             var user = await _userManager.FindByEmailAsync(userEmail);
 
@@ -288,6 +280,45 @@ namespace Authentication_With_JWT.Services
             }
 
             return usersDto;
+        }
+
+        public async Task<bool> isAdmin(string userId)
+        {
+            if (!await _roleManager.RoleExistsAsync("Admin"))
+            {
+                var roleResult = await _roleManager.CreateAsync(new IdentityRole("Admin"));
+                if (!roleResult.Succeeded)
+                {
+                    return false;
+                }
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+            else if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> isUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
     }
 }

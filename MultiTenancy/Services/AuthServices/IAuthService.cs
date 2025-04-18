@@ -10,5 +10,8 @@
         Task<string> DeleteAccount(string error, string email);
         Task<string> setAdminRole(string AdminID, string userEmail);
         Task<IReadOnlyList<UsersDto>> GetAllUsersAsync(string AdminID);
+
+        Task<bool> isAdmin(string userId);
+        Task<bool> isUser(string userId);
     }
 }

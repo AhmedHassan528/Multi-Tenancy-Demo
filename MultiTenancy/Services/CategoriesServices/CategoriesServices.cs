@@ -54,102 +54,135 @@ namespace MultiTenancy.Services.CategoriesServices
             catch (Exception)
             {
                 File.Delete(imagePath!);
-                throw new Exception("some thing error");
+                throw new Exception("Some thing error in category");
 
             }
         }
 
         public async Task<string> DeleteCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category != null)
+            try
             {
-                var products = await _context.Products.Where(p => p.CategoryID == id).ToListAsync();
+                var category = await _context.Categories.FindAsync(id);
+                if (category != null)
+                {
+                    var products = await _context.Products.Where(p => p.CategoryID == id).ToListAsync();
 
-                _context.Products.RemoveRange(products);
+                    _context.Products.RemoveRange(products);
 
-                _context.Categories.Remove(category);
+                    _context.Categories.Remove(category);
 
-                await _context.SaveChangesAsync();
-                return "The category and its related products have been deleted";
+                    await _context.SaveChangesAsync();
+                    return "The category and its related products have been deleted";
+                }
+                throw new Exception( "Can't find this category");
             }
-            return "Can't find this category";
+            catch (Exception)
+            {
+                throw new Exception("some thing error when deleting Category try again later!");
+            }
+
         }
 
         public async Task<IReadOnlyList<CategoryModel>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            try
+            {
+                return await _context.Categories.ToListAsync();
+
+            }
+            catch (Exception)
+            {
+                throw new Exception("Some thing error in category");
+            }
+
         }
 
         public async Task<CategoryModel?> GetByIdAsync(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
+            try
             {
-                return null;
+                var category = await _context.Categories.FindAsync(id);
+                if (category == null)
+                {
+                    throw new Exception("can not find category!!");
+                }
+                return category;
             }
-            return category;
+            catch (Exception)
+            {
+                throw new Exception("Some thing error in category");
+            }
+
         }
 
 
         public async Task<CategoryModel> EditCategoryAsync(int id, CategoryModel updatedCategory)
         {
 
-            // Find the existing brand
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(b => b.Id == id);
-
-            if (category == null)
+            try
             {
-                throw new Exception("Brand not found or you do not have access to it.");
-            }
+                // Find the existing brand
+                var category = await _context.Categories
+                    .FirstOrDefaultAsync(b => b.Id == id);
 
-            // Update name if provided
-            if (!string.IsNullOrWhiteSpace(updatedCategory.Name))
-            {
-                category.Name = updatedCategory.Name;
-            }
-
-            // Handle image upload if provided
-            if (updatedCategory.ImageFiles != null && updatedCategory.ImageFiles.Length > 0)
-            {
-                // Validate file type
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                var extension = Path.GetExtension(updatedCategory.ImageFiles.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension))
+                if (category == null)
                 {
-                    throw new Exception("Invalid image format. Only JPG, JPEG, PNG, and GIF are allowed.");
+                    throw new Exception("Brand not found or you do not have access to it.");
                 }
 
-                // Generate unique file name
-                var fileName = $"{Guid.NewGuid()}{extension}";
-                var filePath = Path.Combine(_imageStoragePath, fileName);
-
-                // Save the file
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Update name if provided
+                if (!string.IsNullOrWhiteSpace(updatedCategory.Name))
                 {
-                    await updatedCategory.ImageFiles.CopyToAsync(stream);
+                    category.Name = updatedCategory.Name;
                 }
 
-                // Delete old image if it exists
-                if (!string.IsNullOrEmpty(category.Image))
+                // Handle image upload if provided
+                if (updatedCategory.ImageFiles != null && updatedCategory.ImageFiles.Length > 0)
                 {
-                    var oldImagePath = Path.Combine(_imageStoragePath, Path.GetFileName(category.Image));
-                    if (File.Exists(oldImagePath))
+                    // Validate file type
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    var extension = Path.GetExtension(updatedCategory.ImageFiles.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
                     {
-                        File.Delete(oldImagePath);
+                        throw new Exception("Invalid image format. Only JPG, JPEG, PNG, and GIF are allowed.");
                     }
+
+                    // Generate unique file name
+                    var fileName = $"{Guid.NewGuid()}{extension}";
+                    var filePath = Path.Combine(_imageStoragePath, fileName);
+
+                    // Save the file
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await updatedCategory.ImageFiles.CopyToAsync(stream);
+                    }
+
+                    // Delete old image if it exists
+                    if (!string.IsNullOrEmpty(category.Image))
+                    {
+                        var oldImagePath = Path.Combine(_imageStoragePath, Path.GetFileName(category.Image));
+                        if (File.Exists(oldImagePath))
+                        {
+                            File.Delete(oldImagePath);
+                        }
+                    }
+
+                    // Update image path
+                    category.Image = $"/BrandImages/{fileName}"; // Updated path
                 }
 
-                // Update image path
-                category.Image = $"/BrandImages/{fileName}"; // Updated path
+                // Save changes
+                _context.Categories.Update(category);
+                await _context.SaveChangesAsync();
+
+                return category;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Some thing error in category");
             }
 
-            // Save changes
-            _context.Categories.Update(category);
-            await _context.SaveChangesAsync();
-
-            return category;
         }
     }
 }

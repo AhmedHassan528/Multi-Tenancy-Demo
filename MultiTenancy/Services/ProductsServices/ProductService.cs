@@ -71,150 +71,180 @@ public class ProductService : IProductService
                     File.Delete(filePath);
                 }
             }
-            throw;
+            throw new Exception("Some thing when create product");
         }
     }
 
     public async Task<string> DeleteProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product is null)
+        try
         {
-            throw new Exception("Cannot find this product");
-        }
-
-        // Delete associated images from the server
-        if (product.Images != null && product.Images.Count > 0)
-        {
-            foreach (var imageUrl in product.Images)
+            var product = await _context.Products.FindAsync(id);
+            if (product is null)
             {
-                string fileName = Path.GetFileName(imageUrl);
-                string imagePath = Path.Combine(hosting.WebRootPath, "ProductImages", fileName);
+                throw new Exception("Cannot find this product");
+            }
 
+            if (product.Images != null && product.Images.Count > 0)
+            {
+                foreach (var imageUrl in product.Images)
+                {
+                    string fileName = Path.GetFileName(imageUrl);
+                    string imagePath = Path.Combine(hosting.WebRootPath, "ProductImages", fileName);
+
+                    if (File.Exists(imagePath))
+                    {
+                        File.Delete(imagePath);
+                    }
+                }
+            }
+
+            if (product.ImageCover != null)
+            {
+                string fileName = Path.GetFileName(product.ImageCover);
+                string imagePath = Path.Combine(hosting.WebRootPath, "ProductCoverImages", fileName);
                 if (File.Exists(imagePath))
                 {
                     File.Delete(imagePath);
                 }
             }
-        }
 
-        if (product.ImageCover != null)
-        {
-            string fileName = Path.GetFileName(product.ImageCover);
-            string imagePath = Path.Combine(hosting.WebRootPath, "ProductCoverImages", fileName);
-            if (File.Exists(imagePath))
-            {
-                File.Delete(imagePath);
-            }
-        }
-
-        var cartItems = await _context.CartItemes
-                .Where(ci => ci.ProductId == id)
-                .ToListAsync();
-
-        if (cartItems.Any())
-        {
-            _context.CartItemes.RemoveRange(cartItems);
-
-            // Update the TotalCartPrice and UpdatedAt for affected carts
-            var affectedCartIds = cartItems.Select(ci => ci.CartId).Distinct().ToList();
-            var affectedCarts = await _context.Carts
-                .Where(c => affectedCartIds.Contains(c.Id))
-                .ToListAsync();
-
-            foreach (var cart in affectedCarts)
-            {
-                // Recalculate TotalCartPrice based on remaining items
-                var remainingItems = await _context.CartItemes
-                    .Where(ci => ci.CartId == cart.Id)
+            var cartItems = await _context.CartItemes
+                    .Where(ci => ci.ProductId == id)
                     .ToListAsync();
 
-                cart.TotalCartPrice = remainingItems.Sum(ci => ci.Price * ci.Count);
-                cart.UpdatedAt = DateTime.UtcNow;
+            if (cartItems.Any())
+            {
+                _context.CartItemes.RemoveRange(cartItems);
+
+                // Update the TotalCartPrice and UpdatedAt for affected carts
+                var affectedCartIds = cartItems.Select(ci => ci.CartId).Distinct().ToList();
+                var affectedCarts = await _context.Carts
+                    .Where(c => affectedCartIds.Contains(c.Id))
+                    .ToListAsync();
+
+                foreach (var cart in affectedCarts)
+                {
+                    // Recalculate TotalCartPrice based on remaining items
+                    var remainingItems = await _context.CartItemes
+                        .Where(ci => ci.CartId == cart.Id)
+                        .ToListAsync();
+
+                    cart.TotalCartPrice = remainingItems.Sum(ci => ci.Price * ci.Count);
+                    cart.UpdatedAt = DateTime.UtcNow;
+                }
             }
+
+            // Delete the product
+            _context.Products.Remove(product);
+
+            // Save all changes
+            await _context.SaveChangesAsync();
+
+            return "The product and its images have been deleted successfully";
+        }
+        catch (Exception)
+        {
+            throw new Exception("Error deleting product");
         }
 
-        // Delete the product
-        _context.Products.Remove(product);
-
-        // Save all changes
-        await _context.SaveChangesAsync();
-
-        return "The product and its images have been deleted successfully";
     }
 
     public async Task<IReadOnlyList<ProductModel>> GetAllAsync()
     {
-        var pro = await _context.Products.AsNoTracking().Include(p => p.Category).Include(p => p.Brand).ToListAsync();
-        return pro;
+        try
+        {
+            var pro = await _context.Products.AsNoTracking().Include(p => p.Category).Include(p => p.Brand).ToListAsync();
+            return pro;
+        }
+        catch (Exception)
+        {
+            throw new Exception("Error fetching products");
+        }
+
     }
 
     public async Task<ProductModel?> GetByIdAsync(int id)
     {
-        var product = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-        if (product == null)
-            return null;
-
-        product.ViewCount++;
-        await _context.SaveChangesAsync();
-
-        return product;
-    }
-
-    public async Task<ProductModel> UpdateProductAsync(int id, ProductModel productModel, IFormFile imageCoverFile, List<IFormFile> imageFiles)
-    {
-        if (productModel == null) throw new ArgumentNullException(nameof(productModel));
-
-        var existingProduct = await _context.Products
+        try
+        {
+            var product = await _context.Products
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .FirstOrDefaultAsync(p => p.Id == id);
 
-        if (existingProduct == null)
+            if (product == null)
+                throw new Exception("can not find this error");
+
+            product.ViewCount++;
+            await _context.SaveChangesAsync();
+
+            return product;
+        }
+        catch(Exception)
         {
-            throw new ArgumentException("Product not found", nameof(id));
+            throw new Exception("Error fetching product");
         }
 
-        // Update scalar properties
-        existingProduct.NumSold = productModel.NumSold;
-        existingProduct.RatingsQuantity = productModel.RatingsQuantity;
-        existingProduct.Title = productModel.Title;
-        existingProduct.Description = productModel.Description;
-        existingProduct.Price = productModel.Price;
-        existingProduct.ViewCount = productModel.ViewCount;
-        existingProduct.CategoryID = productModel.CategoryID;
-        existingProduct.BrandID = productModel.BrandID;
+    }
 
-        // Handle ImageCoverFile
-        if (imageCoverFile != null && imageCoverFile.Length > 0)
+    public async Task<ProductModel> UpdateProductAsync(int id, ProductModel productModel, IFormFile imageCoverFile, List<IFormFile> imageFiles)
+    {
+        try
         {
-            var coverFilePath = await SaveFileAsync(imageCoverFile, "ProductCoverImages");
-            existingProduct.ImageCover = coverFilePath;
-        }
 
-        // Handle ImageFiles
-        if (imageFiles != null && imageFiles.Any())
-        {
-            var imagePaths = new List<string>();
-            foreach (var file in imageFiles)
+            var existingProduct = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (existingProduct == null)
             {
-                if (file.Length > 0)
-                {
-                    var filePath = await SaveFileAsync(file, "ProductImages");
-                    imagePaths.Add(filePath);
-                }
+                throw new Exception("Product not found");
             }
-            existingProduct.Images = imagePaths; 
+
+            // Update scalar properties
+            existingProduct.NumSold = productModel.NumSold;
+            existingProduct.RatingsQuantity = productModel.RatingsQuantity;
+            existingProduct.Title = productModel.Title;
+            existingProduct.Description = productModel.Description;
+            existingProduct.Price = productModel.Price;
+            existingProduct.ViewCount = productModel.ViewCount;
+            existingProduct.CategoryID = productModel.CategoryID;
+            existingProduct.BrandID = productModel.BrandID;
+
+            // Handle ImageCoverFile
+            if (imageCoverFile != null && imageCoverFile.Length > 0)
+            {
+                var coverFilePath = await SaveFileAsync(imageCoverFile, "ProductCoverImages");
+                existingProduct.ImageCover = coverFilePath;
+            }
+
+            // Handle ImageFiles
+            if (imageFiles != null && imageFiles.Any())
+            {
+                var imagePaths = new List<string>();
+                foreach (var file in imageFiles)
+                {
+                    if (file.Length > 0)
+                    {
+                        var filePath = await SaveFileAsync(file, "ProductImages");
+                        imagePaths.Add(filePath);
+                    }
+                }
+                existingProduct.Images = imagePaths;
+            }
+
+            _context.Entry(existingProduct).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return existingProduct;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error updating product");
         }
 
-        _context.Entry(existingProduct).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-
-        return existingProduct;
     }
 
     private async Task<string> SaveFileAsync(IFormFile file, string folder)

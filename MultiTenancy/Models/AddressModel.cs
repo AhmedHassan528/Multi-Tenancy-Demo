@@ -27,5 +27,10 @@ namespace MultiTenancy.Models
 
         [JsonIgnore]
         public string TenantId { get; set; } = null!;
+
+        [NotMapped]
+        public string? Message { get; set; } = null!;
+        [NotMapped]
+        public string? statusCode { get; set; } = null!;
     }
 }

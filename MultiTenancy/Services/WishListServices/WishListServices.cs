@@ -15,125 +15,135 @@ namespace MultiTenancy.Services.WishListServices
 
         public async Task<WishListModel> AddToWishlistAsync(string userId, int productId)
         {
-            if (!await UserExistsAsync(userId))
+            try
             {
-                throw new Exception("User not found");
-            }
-            var pro = await _context.Products.FirstOrDefaultAsync(w => w.Id == productId);
+                var pro = await _context.Products.FirstOrDefaultAsync(w => w.Id == productId);
 
-            if (pro == null)
-            {
-                throw new Exception("Product not found");
-            }
-
-            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
-            if (wishlist == null)
-            {
-                WishListModel model = new()
+                if (pro == null)
                 {
-                    UserId = userId,
-                    ProductsIDs = new List<int> { productId}
-                };
-                _context.WishLists.Add(model);
-                await _context.SaveChangesAsync();
-                return model;
-            }
-            else
-            {
-                if (wishlist.ProductsIDs.Contains(productId))
-                {
-                    throw new Exception("Product already added");
+                    throw new Exception("Product not found");
                 }
-                wishlist.ProductsIDs.Add(productId);
-                _context.WishLists.Update(wishlist);
 
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
-                product!.LikeCount++;
-                _context.Products.Update(product);
+                var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+                if (wishlist == null)
+                {
+                    WishListModel model = new()
+                    {
+                        UserId = userId,
+                        ProductsIDs = new List<int> { productId }
+                    };
+                    _context.WishLists.Add(model);
+                    await _context.SaveChangesAsync();
+                    return model;
+                }
+                else
+                {
+                    if (wishlist.ProductsIDs.Contains(productId))
+                    {
+                        throw new Exception("Product already added");
+                    }
+                    wishlist.ProductsIDs.Add(productId);
+                    _context.WishLists.Update(wishlist);
 
-                await _context.SaveChangesAsync();
-                return wishlist;
+                    var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+                    product!.LikeCount++;
+                    _context.Products.Update(product);
+
+                    await _context.SaveChangesAsync();
+                    return wishlist;
+                }
             }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while adding product to wishlist");
+            }
+
         }
 
 
         public async Task<WishListModel> GetWishlistAsync(string userId)
         {
-            if(!await UserExistsAsync(userId))
+            try
             {
-                throw new Exception("User not found");
+                var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+                return wishlist ?? new WishListModel { UserId = userId, ProductsIDs = new List<int>() };
             }
-            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
-            return wishlist ?? new WishListModel { UserId = userId, ProductsIDs = new List<int>() };
+            catch (Exception ex)
+            {
+                throw new Exception("Error while getting wishlist ");
+            }
+
         }
 
         public async Task<bool> ClearWishlistAsync(string userId)
         {
-            if (!await UserExistsAsync(userId))
+
+            try
             {
-                throw new Exception("User not found");
+                var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+                if (wishlist == null)
+                {
+                    throw new Exception("Wishlist not found");
+                }
+
+                _context.WishLists.Remove(wishlist);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Error while clearing wishlist");
             }
 
-            var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
-            if (wishlist == null)
-            {
-                throw new Exception("Wishlist not found");
-            }
-
-            _context.WishLists.Remove(wishlist);
-            await _context.SaveChangesAsync();
-
-            return true;
         }
 
         public async Task<WishListModel> RemoveFromWishlistAsync(string userId, int productId)
         {
-            if (!await UserExistsAsync(userId))
+
+            try
             {
-                throw new Exception("User not found");
+                var wishpro = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
+                if (!wishpro.ProductsIDs.Contains(productId))
+                {
+                    throw new Exception("can not find this product in your wishList");
+                }
+                wishpro.ProductsIDs.Remove(productId);
+                _context.WishLists.Update(wishpro);
+                await _context.SaveChangesAsync();
+                return wishpro;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Error while removing product from wishlist");
             }
 
-            var wishpro = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
-            if (!wishpro.ProductsIDs.Contains(productId))
-            {
-                throw new Exception("can not find this product in your wishList");
-            }
-            wishpro.ProductsIDs.Remove(productId);
-            _context.WishLists.Update(wishpro);
-            await _context.SaveChangesAsync();
-            return wishpro;
         }
 
         public async Task<List<ProductModel>> GetAllProductinWishList(string userId)
         {
-            if (!await UserExistsAsync(userId))
+            try
             {
-                throw new Exception("User not found");
+
+
+                var wishList = await GetWishlistAsync(userId);
+                if (wishList == null || !wishList.ProductsIDs.Any())
+                {
+                    return new List<ProductModel>();
+                }
+
+                var products = await _context.Products.Include(b => b.Brand).Include(c => c.Category)
+                                             .Where(p => wishList.ProductsIDs.Contains(p.Id))
+                                             .ToListAsync();
+
+                return products;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while getting products from wishlist");
             }
 
-            var wishList = await GetWishlistAsync(userId);
-            if (wishList == null || !wishList.ProductsIDs.Any())
-            {
-                return new List<ProductModel>();
-            }
-
-            var products = await _context.Products.Include(b => b.Brand).Include(c => c.Category)
-                                         .Where(p => wishList.ProductsIDs.Contains(p.Id))
-                                         .ToListAsync();
-
-            return products;
         }
-
-        private async Task<bool> UserExistsAsync(string userId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return false;
-            }
-            return true;
-        }
-
 
     }
 }

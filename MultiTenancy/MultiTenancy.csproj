@@ -26,6 +26,7 @@
     <PackageReference Include="MimeKit" Version="4.11.0" />
     <PackageReference Include="Stripe.net" Version="47.4.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />
+    <PackageReference Include="Xdot.Paymob.CashIn" Version="1.0.7" />
   </ItemGroup>
 
   <ItemGroup>

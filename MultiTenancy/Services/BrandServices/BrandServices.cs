@@ -73,102 +73,135 @@ namespace MultiTenancy.Services.BrandServices
         }
         public async Task<string> DeleteBrand(int id)
         {
-            var brand = await _context.Brands.FindAsync(id);
-            if (brand != null)
+            try
             {
-                var products = await _context.Products.Where(p => p.BrandID == id).ToListAsync();
-
-                foreach(var pro in products)
+                var brand = await _context.Brands.FindAsync(id);
+                if (brand != null)
                 {
-                    await _productService.DeleteProduct(pro.Id);
+                    var products = await _context.Products.Where(p => p.BrandID == id).ToListAsync();
 
+                    foreach (var pro in products)
+                    {
+                        await _productService.DeleteProduct(pro.Id);
+
+                    }
+
+                    _context.Brands.Remove(brand);
+                    await _context.SaveChangesAsync();
+
+                    File.Delete(Path.Combine(_imageStoragePath, Path.GetFileName(brand.Image!)));
+
+                    return "The brand and its related products have been deleted";
                 }
+                throw new Exception("Can't find this brand");
 
-                _context.Brands.Remove(brand);
-                await _context.SaveChangesAsync();
-
-                File.Delete(Path.Combine(_imageStoragePath, Path.GetFileName(brand.Image!)));
-
-                return "The brand and its related products have been deleted";
             }
-            return "Can't find this brand";
+            catch (Exception)
+            {
+                throw new Exception("some thing error");
+
+            }
+
         }
 
 
         public async Task<IReadOnlyList<BrandModel>> GetAllAsync()
         {
-            return await _context.Brands.AsNoTracking().ToListAsync();
+
+            try
+            {
+                return await _context.Brands.AsNoTracking().ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Some thing error");
+            }
         }
 
         public async Task<BrandModel?> GetByIdAsync(int id)
         {
-            var brand = await _context.Brands.FindAsync(id);
-            if (brand == null)
+            try
             {
-                return null;
+                var brand = await _context.Brands.FindAsync(id);
+                if (brand == null)
+                {
+                    throw new Exception("Brand Not found!!!");
+                }
+                return brand;
             }
-            return brand;
+            catch (Exception ex)
+            {
+                throw new Exception("Some thing error");
+            }
+
         }
 
         public async Task<BrandModel> EditBrandAsync(int id, BrandModel updatedBrand)
         {
 
-
-            // Find the existing brand
-            var brand = await _context.Brands
-                .FirstOrDefaultAsync(b => b.Id == id);
-
-            if (brand == null)
+            try
             {
-                throw new Exception("Brand not found or you do not have access to it.");
-            }
+                // Find the existing brand
+                var brand = await _context.Brands
+                    .FirstOrDefaultAsync(b => b.Id == id);
 
-            // Update name if provided
-            if (!string.IsNullOrWhiteSpace(updatedBrand.Name))
-            {
-                brand.Name = updatedBrand.Name;
-            }
-
-            // Handle image upload if provided
-            if (updatedBrand.ImageFiles != null && updatedBrand.ImageFiles.Length > 0)
-            {
-                // Validate file type
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                var extension = Path.GetExtension(updatedBrand.ImageFiles.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension))
+                if (brand == null)
                 {
-                    throw new Exception("Invalid image format. Only JPG, JPEG, PNG, and GIF are allowed.");
+                    throw new Exception("Brand not found or you do not have access to it.");
                 }
 
-                // Generate unique file name
-                var fileName = $"{Guid.NewGuid()}{extension}";
-                var filePath = Path.Combine(_imageStoragePath, fileName);
-
-                // Save the file
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Update name if provided
+                if (!string.IsNullOrWhiteSpace(updatedBrand.Name))
                 {
-                    await updatedBrand.ImageFiles.CopyToAsync(stream);
+                    brand.Name = updatedBrand.Name;
                 }
 
-                // Delete old image if it exists
-                if (!string.IsNullOrEmpty(brand.Image))
+                // Handle image upload if provided
+                if (updatedBrand.ImageFiles != null && updatedBrand.ImageFiles.Length > 0)
                 {
-                    var oldImagePath = Path.Combine(_imageStoragePath, Path.GetFileName(brand.Image));
-                    if (File.Exists(oldImagePath))
+                    // Validate file type
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    var extension = Path.GetExtension(updatedBrand.ImageFiles.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
                     {
-                        File.Delete(oldImagePath);
+                        throw new Exception("Invalid image format. Only JPG, JPEG, PNG, and GIF are allowed.");
                     }
+
+                    // Generate unique file name
+                    var fileName = $"{Guid.NewGuid()}{extension}";
+                    var filePath = Path.Combine(_imageStoragePath, fileName);
+
+                    // Save the file
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await updatedBrand.ImageFiles.CopyToAsync(stream);
+                    }
+
+                    // Delete old image if it exists
+                    if (!string.IsNullOrEmpty(brand.Image))
+                    {
+                        var oldImagePath = Path.Combine(_imageStoragePath, Path.GetFileName(brand.Image));
+                        if (File.Exists(oldImagePath))
+                        {
+                            File.Delete(oldImagePath);
+                        }
+                    }
+
+                    // Update image path
+                    brand.Image = $"/BrandImages/{fileName}"; // Updated path
                 }
 
-                // Update image path
-                brand.Image = $"/BrandImages/{fileName}"; // Updated path
+                // Save changes
+                _context.Brands.Update(brand);
+                await _context.SaveChangesAsync();
+
+                return brand;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("some thing error");
             }
 
-            // Save changes
-            _context.Brands.Update(brand);
-            await _context.SaveChangesAsync();
-
-            return brand;
         }
     }
 }

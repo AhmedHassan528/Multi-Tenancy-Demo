@@ -11,23 +11,24 @@ namespace MultiTenancy.Controllers
     {
         private readonly IAddressServices _addressServices;
         private readonly ITrafficServices _trafficServices;
+        private readonly IAuthService _authService;
 
-        public AddressController(IAddressServices addressServices, ITrafficServices trafficServices)
+        public AddressController(IAddressServices addressServices, ITrafficServices trafficServices, IAuthService authService)
         {
             _addressServices = addressServices;
             _trafficServices = trafficServices;
-
+            _authService = authService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetUserAddresses()
         {
             await _trafficServices.AddReqCountAsync();
-            // Get the user ID from the claims
+
             var userID = User.FindFirst("uid")?.Value;
-            if (userID == null)
+            if (userID == null || !await _authService.isUser(userID))
             {
-                return BadRequest(new { message = "some thing error when get adresses", StatusCode = 400 });
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
 
             var Addresses = await _addressServices.GetUserAddresses(userID);
@@ -44,37 +45,45 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userID = User.FindFirst("uid")?.Value;
-            if (userID == null)
+            if (userID == null || !await _authService.isUser(userID))
             {
-                return NotFound(new { message = "some thing error when create address tray agian later!", StatusCode = 400 });
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
 
             var Address = await _addressServices.AddAddress(userID, address);
             if (Address == null)
             {
-                return BadRequest("Address not added");
+                return StatusCode(500, Address!.Message);
             }
             return Ok(Address);
         }
 
-        [HttpGet("GetAddressByID/{addressID}")]
-        public async Task<IActionResult> GetAddressByID(int addressID)
-        {
-            await _trafficServices.AddReqCountAsync();
+        //[HttpGet("GetAddressByID/{addressID}")]
+        //public async Task<IActionResult> GetAddressByID(int addressID)
+        //{
+        //    await _trafficServices.AddReqCountAsync();
 
-            var userID = User.FindFirst("uid")?.Value;
-            if (userID == null)
-            {
-                return BadRequest(new { message = "some thing error when get address try again later!" });
+        //    var userID = User.FindFirst("uid")?.Value;
+        //    if (userID == null || !await _authService.isUser(userID))
+        //    {
+        //        return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account." });
 
-            }
-            var Address = await _addressServices.GetAddressByID(userID, addressID);
-            if (Address == null)
-            {
-                return BadRequest("Address not found");
-            }
-            return Ok(Address);
-        }
+        //    }
+
+        //    var Address = await _addressServices.GetAddressByID(userID, addressID);
+
+        //    if (!string.IsNullOrEmpty(Address.Message))
+        //    {
+        //        return StatusCode(500, Address.Message);
+        //    }
+
+        //    if (Address == null)
+        //    {
+        //        return Ok("Address not found");
+        //    }
+
+        //    return Ok(Address);
+        //}
 
         [HttpDelete("{addressID}")]
         public async Task<IActionResult> DeleteAddressByID(int addressID)
@@ -82,37 +91,20 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userID = User.FindFirst("uid")?.Value;
-            if (userID == null || addressID == 0)
+            if (userID == null || addressID == 0 || !await _authService.isUser(userID))
             {
-                return BadRequest(new { message = "some thing error when delete address try again later!" });
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account." });
 
             }
+
             var Addresses = await _addressServices.DeleteAddressByID(userID, addressID);
             if (Addresses == null)
             {
-                return BadRequest("Address not found");
+                return NotFound("Address not found");
             }
             return Ok(Addresses);
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> CrearAllUserAddress()
-        {
-            await _trafficServices.AddReqCountAsync();
-
-            var userID = User.FindFirst("uid")?.Value;
-
-            if (userID == null)
-            {
-                return BadRequest(new { message = "some thing error when clear addresses try again later!" });
-            }
-            var Addresses = await _addressServices.ClearUserAddresses(userID);
-            if (Addresses == null)
-            {
-                return BadRequest(Addresses);
-            }
-            return Ok("Address are cleared successfully");
-        }
 
 
 

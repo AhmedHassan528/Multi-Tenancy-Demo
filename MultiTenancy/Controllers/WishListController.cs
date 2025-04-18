@@ -13,11 +13,13 @@ namespace MultiTenancy.Controllers
     {
         private readonly IWishListServices _wishList;
         private readonly ITrafficServices _trafficServices;
+        private readonly IAuthService _authService;
 
-        public WishListController(IWishListServices wishList, ITrafficServices trafficServices)
+        public WishListController(IWishListServices wishList, ITrafficServices trafficServices, IAuthService authService)
         {
             _wishList = wishList;
             _trafficServices = trafficServices;
+            _authService = authService;
         }
         [HttpGet("Product")]
         public async Task<IActionResult> GetWishlistProducts()
@@ -25,10 +27,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var Products = await _wishList.GetAllProductinWishList(userId);
@@ -46,9 +49,9 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
             try
             {
@@ -67,10 +70,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var wishlist = await _wishList.AddToWishlistAsync(userId, ProductId);
@@ -88,10 +92,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var wishlist = await _wishList.RemoveFromWishlistAsync(userId, ProductId);
@@ -110,9 +115,9 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
             try
             {

@@ -6,6 +6,5 @@
         Task<List<AddressModel>> GetUserAddresses(string userID);
         Task<AddressModel> AddAddress(string userID, AddresesesDto address);
         Task<List<AddressModel>> DeleteAddressByID(string userID, int addressID);
-        Task<string> ClearUserAddresses(string userID);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using MultiTenancy.Services.TrafficServices;
 
 namespace MultiTenancy.Controllers
@@ -10,26 +11,28 @@ namespace MultiTenancy.Controllers
     {
         private readonly ICategoriesServices _categoriesServices;
         private readonly ITrafficServices _trafficServices;
+        private readonly IAuthService _authService;
 
-        public CategoryController(ICategoriesServices categoriesServices, ITrafficServices trafficServices)
+
+        public CategoryController(ICategoriesServices categoriesServices, ITrafficServices trafficServices, IAuthService authService)
         {
             _categoriesServices = categoriesServices;
             _trafficServices = trafficServices;
+            _authService = authService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCategories()
         {
+            await _trafficServices.AddReqCountAsync();
             try
             {
-                await _trafficServices.AddReqCountAsync();
-
                 var Categories = await _categoriesServices.GetAllAsync();
                 return Ok(Categories);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting Categories try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
             
         }
@@ -41,16 +44,16 @@ namespace MultiTenancy.Controllers
 
             try
             {
-                if (id == null)
+                if (id == 0)
                 {
-                    return NotFound();
+                    return NotFound(new {Message = "can not find category!!" });
                 }
                 var categoryModel = await _categoriesServices.GetByIdAsync(id);
                 return Ok(categoryModel);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting Category try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
 
         }
@@ -64,6 +67,12 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
             await _trafficServices.AddCategoryCountAsync();
 
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
             try
             {
                 CategoryModel category = new()
@@ -76,7 +85,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when creating Category try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
             
 
@@ -90,9 +99,15 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
             await _trafficServices.DecreaseCategoryCountAsync();
 
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
             try
             {
-                if (id != null)
+                if (id == 0)
                 {
                     var message = await _categoriesServices.DeleteCategory(id);
                     return Ok(message);
@@ -102,7 +117,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when deleting Category try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -114,6 +129,12 @@ namespace MultiTenancy.Controllers
         {
             await _trafficServices.AddReqCountAsync();
 
+            var userID = User.FindFirst("uid")?.Value;
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
             try
             {
                 var updatedCategory = new CategoryModel
@@ -122,14 +143,13 @@ namespace MultiTenancy.Controllers
                     ImageFiles = updateDto.ImageFiles
                 };
 
-                // Call the service
                 var result = await _categoriesServices.EditCategoryAsync(id, updatedCategory);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when editing Category try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

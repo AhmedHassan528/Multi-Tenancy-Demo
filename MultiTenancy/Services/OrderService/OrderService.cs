@@ -22,179 +22,211 @@ namespace MultiTenancy.Services.OrderService
 
         public async Task<(Order order, string clientSecret)> CreateOrderAsync(string userID, int cartId, int addressID, string HostUrl, string CustomerName)
         {
-            var tenant = _tenantService.GetCurrentTenant();
-
-            var cart = await _dbContext.Carts
-                .Where(w => w.CartOwner == userID)
-                .Include(c => c.Products).ThenInclude(p => p.Product).ThenInclude(p => p.Brand)
-                .Include(c => c.Products).ThenInclude(p => p.Product).ThenInclude(p => p.Category)
-                .FirstOrDefaultAsync(c => c.Id == cartId);
-
-            var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.Id == addressID);
-           
-
-            if (cart == null)
+            try
             {
-                throw new Exception("Cart not found");
-            }
-            if (addressID == 0)
-            {
-                throw new Exception("Address not set for this cart");
-            }
-            if (!cart.Products.Any())
-            {
-                throw new Exception("Cart is empty");
-            }
+                var tenant = _tenantService.GetCurrentTenant();
 
-            StripeConfiguration.ApiKey = tenant.StripeSecretKey;
+                var api = tenant?.ApiKey;
 
-            // Create PaymentIntent
-            var options = new SessionCreateOptions
-            {
-                LineItems = cart.Products.Select(ci => new SessionLineItemOptions
+                var cart = await _dbContext.Carts
+                    .Where(w => w.CartOwner == userID)
+                    .Include(c => c.Products).ThenInclude(p => p.Product).ThenInclude(p => p.Brand)
+                    .Include(c => c.Products).ThenInclude(p => p.Product).ThenInclude(p => p.Category)
+                    .FirstOrDefaultAsync(c => c.Id == cartId);
+
+                var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.Id == addressID);
+
+
+                if (cart == null)
                 {
-                    PriceData = new SessionLineItemPriceDataOptions
+                    throw new Exception("Cart not found");
+                }
+                if (addressID == 0)
+                {
+                    throw new Exception("Address not set for this cart");
+                }
+                if (!cart.Products.Any())
+                {
+                    throw new Exception("Cart is empty");
+                }
+
+                StripeConfiguration.ApiKey = tenant.StripeSecretKey;
+
+                // Create PaymentIntent
+                var options = new SessionCreateOptions
+                {
+                    LineItems = cart.Products.Select(ci => new SessionLineItemOptions
                     {
-                        Currency = "usd",
-                        UnitAmount = (long)(ci.Price * 100), // Convert to cents
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        PriceData = new SessionLineItemPriceDataOptions
                         {
-                            Name = ci.Product?.Title ?? "Unknown Product",
+                            Currency = "usd",
+                            UnitAmount = (long)(ci.Price * 100), // Convert to cents
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = ci.Product?.Title ?? "Unknown Product",
+                            },
                         },
-                    },
-                    Quantity = ci.Count,
-                }).ToList(),
-                Mode = "payment",
-                SuccessUrl = HostUrl + "/orderHistory?session_id={CHECKOUT_SESSION_ID}",
-                CancelUrl = HostUrl + "/cart",
-            };
+                        Quantity = ci.Count,
+                    }).ToList(),
+                    Mode = "payment",
+                    SuccessUrl = HostUrl + "/orderHistory?session_id={CHECKOUT_SESSION_ID}",
+                    CancelUrl = HostUrl + "/cart",
+                };
 
-            var service = new SessionService();
-            var session = await service.CreateAsync(options);
+                var service = new SessionService();
+                var session = await service.CreateAsync(options);
 
-            // Create Order with Items
-            var order = new Order
-            {
-                CartOwner = cart.CartOwner,
-                CartId = cart.Id,
-                TotalAmount = cart.TotalCartPrice,
-                PaymentIntentId = session.Id,
-                AddressId = addressID,
-                AddressName = address.AddressName,
-                City = address.City,
-                PhoneNumber = address.PhoneNumber,
-                Address = address.Address,
-                paymentMethodType = "Online Payment",
-                TenantId = tenant.TId,
-                CustomerName = CustomerName,
-                Items = cart.Products.Select(ci => new OrderItem
+                // Create Order with Items
+                var order = new Order
                 {
-                    Count = ci.Count,
-                    Price = ci.Price,
-                    ProductId = ci.ProductId,
-                    ProductName = ci.Product?.Title ?? "Unknown Product",
-                    ProductDescription = ci.Product?.Description ?? "No Description",
-                    ProductImage = ci.Product?.ImageCover ?? "No Image",
-                    Category = ci.Product?.Category?.Name ?? "Unknown Category",
-                    Brand = ci.Product?.Brand?.Name ?? "Unknown Brand",
-                    CategoryId = ci.Product.CategoryID,
-                    BrandId = ci.Product.BrandID,
-                    TenantId = tenant.TId
-                }).ToList()
-            };
-            _dbContext.Orders.Add(order);
-            cart.Products.Clear();
-            cart.TotalCartPrice = 0;
-            cart.UpdatedAt = DateTime.UtcNow;
+                    CartOwner = cart.CartOwner,
+                    CartId = cart.Id,
+                    TotalAmount = cart.TotalCartPrice,
+                    PaymentIntentId = session.Id,
+                    AddressId = addressID,
+                    AddressName = address.AddressName,
+                    City = address.City,
+                    PhoneNumber = address.PhoneNumber,
+                    Address = address.Address,
+                    paymentMethodType = "Online Payment",
+                    TenantId = tenant.TId,
+                    CustomerName = CustomerName,
+                    Items = cart.Products.Select(ci => new OrderItem
+                    {
+                        Count = ci.Count,
+                        Price = ci.Price,
+                        ProductId = ci.ProductId,
+                        ProductName = ci.Product?.Title ?? "Unknown Product",
+                        ProductDescription = ci.Product?.Description ?? "No Description",
+                        ProductImage = ci.Product?.ImageCover ?? "No Image",
+                        Category = ci.Product?.Category?.Name ?? "Unknown Category",
+                        Brand = ci.Product?.Brand?.Name ?? "Unknown Brand",
+                        CategoryId = ci.Product.CategoryID,
+                        BrandId = ci.Product.BrandID,
+                        TenantId = tenant.TId
+                    }).ToList()
+                };
+                _dbContext.Orders.Add(order);
+                cart.Products.Clear();
+                cart.TotalCartPrice = 0;
+                cart.UpdatedAt = DateTime.UtcNow;
 
-            await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
 
-            return (order, session.Id);
+                return (order, session.Id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error creating order");
+            }
+
         }
 
 
 
         public async Task<Order> GetOrderAsync(int orderId)
         {
-            var tenant = _tenantService.GetCurrentTenant();
-            var order = await _dbContext.Orders
-                .Include(o => o.Items)
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == tenant.TId);
-
-            if (order == null)
+            try
             {
-                throw new Exception("Order not found");
+                var tenant = _tenantService.GetCurrentTenant();
+                var order = await _dbContext.Orders
+                    .Include(o => o.Items)
+                    .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == tenant.TId);
+
+                return order;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error getting order");
             }
 
-            return order;
         }
         public async Task<Queue<Order>> AdminGetAllOrdersAsync(string userID)
         {
-            var user = await _dbContext.Users.FindAsync(userID);
-            if (user == null || !(await _userManager.IsInRoleAsync(user, "Admin")))
+            try
             {
-                throw new UnauthorizedAccessException("User is not authorized to access this resource.");
+                var user = await _dbContext.Users.FindAsync(userID);
+
+
+                var tenant = _tenantService.GetCurrentTenant();
+                var orders = await _dbContext.Orders
+                    .Where(o => o.TenantId == tenant.TId)
+                    .Include(o => o.Items)
+                    .ToListAsync();
+
+                return new Queue<Order>(orders);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error getting orders");
             }
 
-            var tenant = _tenantService.GetCurrentTenant();
-            var orders = await _dbContext.Orders
-                .Where(o => o.TenantId == tenant.TId)
-                .Include(o => o.Items)
-                .ToListAsync();
-
-            return new Queue<Order>(orders);
         }
 
         public async Task<Queue<Order>> GetAllOrdersAsync(string userID)
         {
-            var user = await _dbContext.Users.FindAsync(userID);
-            if (user == null)
+            try
             {
-                throw new UnauthorizedAccessException("User not found.");
+                var user = await _dbContext.Users.FindAsync(userID);
+
+
+                var tenant = _tenantService.GetCurrentTenant();
+                var orders = await _dbContext.Orders
+                    .Where(o => o.CartOwner == userID)
+                    .Include(o => o.Items)
+                    .ToListAsync();
+
+                return new Queue<Order>(orders);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error getting orders");
             }
 
-            var tenant = _tenantService.GetCurrentTenant();
-            var orders = await _dbContext.Orders
-                .Where(o => o.CartOwner == userID)
-                .Include(o => o.Items)
-                .ToListAsync();
-
-            return new Queue<Order>(orders);
         }
         public async Task<string> updateOrderStatus(string userID, int orderID, string statusMass)
         {
-            var user = await _dbContext.Users.FindAsync(userID);
-            if (user == null || !(await _userManager.IsInRoleAsync(user, "Admin")))
+            try
             {
-                throw new UnauthorizedAccessException("User is not authorized to access this resource.");
-            }
+                var user = await _dbContext.Users.FindAsync(userID);
 
-            var tenant = _tenantService.GetCurrentTenant();
-            var order = await _dbContext.Orders.FirstOrDefaultAsync(i => i.Id == orderID);
+                var tenant = _tenantService.GetCurrentTenant();
+                var order = await _dbContext.Orders.FirstOrDefaultAsync(i => i.Id == orderID);
 
 
-            if (order != null)
-            {
-                switch (statusMass.ToLower())
+                if (order != null)
                 {
-                    case "received":
-                        order.statusMess = "Received";
-                        break;
-                    case "delivered":
-                        order.statusMess = "Delivered";
-                        break;
-                    case "canceled":
-                        order.statusMess = "Canceled";
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid status message.");
+                    switch (statusMass.ToLower())
+                    {
+                        case "received":
+                            order.statusMess = "Received";
+                            break;
+                        case "delivered":
+                            order.statusMess = "Delivered";
+                            break;
+                        case "canceled":
+                            order.statusMess = "Canceled";
+                            break;
+                        default:
+                            throw new Exception("Invalid status message.");
+                    }
+
+                    _dbContext.Orders.Update(order);
+                    await _dbContext.SaveChangesAsync();
+                    return "";
                 }
+                else
+                {
+                    throw new Exception("Order not found");
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating order status");
             }
 
-            _dbContext.Orders.Update(order);
-            await _dbContext.SaveChangesAsync();
-
-            return "";
         }
         
     }

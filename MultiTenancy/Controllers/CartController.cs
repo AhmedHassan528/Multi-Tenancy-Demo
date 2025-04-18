@@ -12,11 +12,14 @@ namespace MultiTenancy.Controllers
 
         private readonly ICartServices _cartServices;
         private readonly ITrafficServices _trafficServices;
+        private readonly IAuthService _authService;
 
-        public CartController(ICartServices cartServices, ITrafficServices trafficServices)
+
+        public CartController(ICartServices cartServices, ITrafficServices trafficServices, IAuthService authService)
         {
             _cartServices = cartServices;
             _trafficServices = trafficServices;
+            _authService = authService;
         }
 
         [HttpGet]
@@ -25,10 +28,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return BadRequest();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var cart = await _cartServices.GetUserCartAsync(userId);
@@ -36,7 +40,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when get cart" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -46,10 +50,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var cart = await _cartServices.AddItemToCartAsync(userId, ProductId, 1);
@@ -57,7 +62,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when adding to cart \n try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -67,9 +72,9 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return BadRequest();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
             try
             {
@@ -78,7 +83,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when Removing from cart \n try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -88,10 +93,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var UserId = User.FindFirst("uid")?.Value;
-            if (UserId == null)
+            if (UserId == null || !await _authService.isUser(UserId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var cart = await _cartServices.IncreaseItemCountAsync(UserId, ProductId);
@@ -99,7 +105,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error on cart \n try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -109,10 +115,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var UserId = User.FindFirst("uid")?.Value;
-            if (UserId == null)
+            if (UserId == null || !await _authService.isUser(UserId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var cart = await _cartServices.DecreaseItemCountAsync(UserId, ProductId);
@@ -120,7 +127,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error on cart \n try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -130,9 +137,9 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isUser(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
             try
             {
@@ -141,7 +148,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when clear cart \n try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 

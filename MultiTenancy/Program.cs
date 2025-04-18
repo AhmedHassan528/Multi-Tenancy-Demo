@@ -7,6 +7,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenancy.ConfigureServices;
 using MultiTenancy.Services.OrderService;
+using MultiTenancy.Services.paymobServices;
 using MultiTenancy.Services.TrafficServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISendMail, SendMail>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITrafficServices, TrafficServices>();
+builder.Services.AddHttpClient<IPaymentService, PaymentService>();
+
 
 
 builder.Services.AddHttpContextAccessor();

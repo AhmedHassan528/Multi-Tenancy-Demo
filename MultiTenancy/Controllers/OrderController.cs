@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
+using MultiTenancy.Dtos.PaymobDtos;
 using MultiTenancy.Services.OrderService;
+using MultiTenancy.Services.paymobServices;
 using MultiTenancy.Services.TrafficServices;
 using Stripe;
 using Stripe.Checkout;
@@ -19,14 +21,19 @@ namespace MultiTenancy.Controllers
         private readonly ITenantService _tenantService;
         private readonly ApplicationDbContext context;
         private readonly ITrafficServices _trafficServices;
+        private readonly IPaymentService _PaymentService;
+        private readonly IAuthService _authService;
 
 
-        public OrderController(IOrderService orderService, ITenantService tenantService, ApplicationDbContext context, ITrafficServices trafficServices)
+
+        public OrderController(IOrderService orderService, ITenantService tenantService, ApplicationDbContext context, ITrafficServices trafficServices, IPaymentService PaymentService, IAuthService authService)
         {
             _orderService = orderService;
             _tenantService = tenantService;
             this.context = context;
             _trafficServices = trafficServices;
+            _PaymentService = PaymentService;
+            _authService = authService;
         }
 
         [HttpPost("create")]
@@ -38,11 +45,16 @@ namespace MultiTenancy.Controllers
 
             var userID = User.FindFirst("uid")?.Value;
             var CustomerName = User.FindFirst("CustomerName")?.Value;
-
-            if (userID == null || CustomerName == null)
+            if (CustomerName == null)
             {
-                return BadRequest(new { message = "some thing error when creating order try again later!" });
+                CustomerName = "Customer";
             }
+
+            if (userID == null || !await _authService.isUser(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
+
             try
             {
 
@@ -51,7 +63,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when creating order try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -91,9 +103,10 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userID = User.FindFirst("uid")?.Value;
-            if (userID == null)
+
+            if (userID == null || !await _authService.isUser(userID))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
             try
             {
@@ -102,7 +115,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting orders try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -114,10 +127,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userID = User.FindFirst("uid")?.Value;
-            if (userID == null)
+            if (userID == null || !await _authService.isAdmin(userID))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var orders = await _orderService.AdminGetAllOrdersAsync(userID);
@@ -125,7 +139,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting order try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
         // order details
@@ -134,6 +148,12 @@ namespace MultiTenancy.Controllers
         public async Task<IActionResult> GetOrder(int orderId)
         {
             await _trafficServices.AddReqCountAsync();
+            var userID = User.FindFirst("uid")?.Value;
+
+            if (userID == null || !await _authService.isAdmin(userID))
+            {
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
+            }
 
             try
             {
@@ -142,7 +162,7 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting order try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -153,10 +173,11 @@ namespace MultiTenancy.Controllers
             await _trafficServices.AddReqCountAsync();
 
             var userId = User.FindFirst("uid")?.Value;
-            if (userId == null)
+            if (userId == null || !await _authService.isAdmin(userId))
             {
-                return NotFound();
+                return NotFound(new { message = "Error: User not found. \nPlease ensure you have entered the correct username or email, or register for an account.", StatusCode = 401 });
             }
+
             try
             {
                 var order = await _orderService.updateOrderStatus(userId, orderId, statusMass);
@@ -168,8 +189,24 @@ namespace MultiTenancy.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "some thing error when getting order try again later!" });
+                return BadRequest(new { message = ex.Message });
             }
+        }
+
+
+        [HttpPost("pay")]
+        public async Task<IActionResult> Pay([FromBody] PaymentRequest request)
+        {
+            var authToken = await _PaymentService.GetAuthTokenAsync();
+            var orderId = await _PaymentService.CreateOrderAsync(authToken, request.AmountCents);
+            var paymentKey = await _PaymentService.GeneratePaymentKeyAsync(authToken, orderId, request.AmountCents, request.BillingEmail);
+
+            var tenant = _tenantService.GetCurrentTenant();
+            var IframeId = tenant?.IframeId;
+
+            var iframeUrl = $"https://accept.paymobsolutions.com/api/acceptance/iframes/{IframeId}?payment_token={paymentKey}";
+
+            return Ok(new { url = iframeUrl });
         }
 
 

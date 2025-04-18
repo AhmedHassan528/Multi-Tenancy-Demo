@@ -22,6 +22,7 @@ namespace MultiTenancy.Models.CheckOutModels
         public string paymentMethodType { get; set; }
 
         public bool status { get; set; } = false;
+
         public string statusMess { get; set; } = "Pending";
 
         public string CustomerName { get; set; }
