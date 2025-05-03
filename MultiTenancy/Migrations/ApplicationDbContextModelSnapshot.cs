@@ -460,7 +460,8 @@ namespace MultiTenancy.Migrations
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("CustomerName");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
@@ -482,14 +483,16 @@ namespace MultiTenancy.Migrations
 
                     b.Property<string>("paymentMethodType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PaymentMethodType");
 
                     b.Property<bool>("status")
                         .HasColumnType("bit");
 
                     b.Property<string>("statusMess")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("StatusMessage");
 
                     b.HasKey("Id");
 

@@ -177,17 +177,6 @@ namespace Authentication_With_JWT.Services
 
         public async Task<string> setAdminRole(string AdminID, string userEmail)
         {
-            var admin = await _userManager.FindByIdAsync(AdminID);
-
-
-
-            var user = await _userManager.FindByEmailAsync(userEmail);
-
-            if (admin == null || user == null)
-            {
-                return "Admin user not found";
-            }
-
             if (!await _roleManager.RoleExistsAsync("Admin"))
             {
                 var roleResult = await _roleManager.CreateAsync(new IdentityRole("Admin"));
@@ -197,22 +186,55 @@ namespace Authentication_With_JWT.Services
                 }
             }
 
-            if (await _userManager.IsInRoleAsync(admin, "Admin"))
+
+            var user = await _userManager.FindByEmailAsync(userEmail);
+
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, "Admin");
+            if (!addToRoleResult.Succeeded)
             {
-                var addToRoleResult = await _userManager.AddToRoleAsync(user, "Admin");
-                if (!addToRoleResult.Succeeded)
-                {
-                    return "Failed to add Admin role to user";
-                }
-                else
-                {
-                    return "";
-                }
+                return "Failed to add Admin role to user";
             }
             else
             {
-                return "Some thing Error!";
+                return "";
             }
+
+            //var admin = await _userManager.FindByIdAsync(AdminID);
+
+
+
+            //var user = await _userManager.FindByEmailAsync(userEmail);
+
+            //if (admin == null || user == null)
+            //{
+            //    return "Admin user not found";
+            //}
+
+            //if (!await _roleManager.RoleExistsAsync("Admin"))
+            //{
+            //    var roleResult = await _roleManager.CreateAsync(new IdentityRole("Admin"));
+            //    if (!roleResult.Succeeded)
+            //    {
+            //        return "Failed to create Admin role";
+            //    }
+            //}
+
+            //if (await _userManager.IsInRoleAsync(admin, "Admin"))
+            //{
+            //    var addToRoleResult = await _userManager.AddToRoleAsync(user, "Admin");
+            //    if (!addToRoleResult.Succeeded)
+            //    {
+            //        return "Failed to add Admin role to user";
+            //    }
+            //    else
+            //    {
+            //        return "";
+            //    }
+            //}
+            //else
+            //{
+            //    return "Some thing Error!";
+            //}
 
         }
 

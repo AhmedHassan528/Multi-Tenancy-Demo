@@ -45,6 +45,13 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
         modelBuilder.Entity<Items>().HasQueryFilter(e => e.TenantId == TenantId);
         modelBuilder.Entity<Traffic>().HasQueryFilter(e => e.TenantId == TenantId);
 
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.Property(e => e.CustomerName).HasColumnName("CustomerName");
+            entity.Property(e => e.paymentMethodType).HasColumnName("PaymentMethodType");
+            entity.Property(e => e.statusMess).HasColumnName("StatusMessage");
+        });
+
 
 
 

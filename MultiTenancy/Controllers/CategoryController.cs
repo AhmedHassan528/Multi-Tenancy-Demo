@@ -107,7 +107,7 @@ namespace MultiTenancy.Controllers
 
             try
             {
-                if (id == 0)
+                if (id != 0)
                 {
                     var message = await _categoriesServices.DeleteCategory(id);
                     return Ok(message);

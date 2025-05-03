@@ -34,7 +34,7 @@ namespace MultiTenancy.Services.TrafficServices
 
             if (traffic == null)
             {
-                CreateTrafficAsync();
+                await CreateTrafficAsync();
             }
 
             return traffic;
@@ -49,7 +49,7 @@ namespace MultiTenancy.Services.TrafficServices
             var traffic = await _context.traffics.FirstOrDefaultAsync(t => t.TenantId == tenantId);
             if (traffic == null)
             {
-                CreateTrafficAsync();
+                await CreateTrafficAsync();
             }
             else
             {
@@ -70,7 +70,7 @@ namespace MultiTenancy.Services.TrafficServices
             var traffic = await _context.traffics.FirstOrDefaultAsync(t => t.TenantId == tenantId);
             if (traffic == null)
             {
-                CreateTrafficAsync();
+                await CreateTrafficAsync();
             }
             else
             {
@@ -89,7 +89,7 @@ namespace MultiTenancy.Services.TrafficServices
             var traffic = await _context.traffics.FirstOrDefaultAsync(t => t.TenantId == tenantId);
             if (traffic == null)
             {
-                CreateTrafficAsync();
+                await CreateTrafficAsync();
             }
             else
             {
@@ -108,7 +108,7 @@ namespace MultiTenancy.Services.TrafficServices
             var traffic = await _context.traffics.FirstOrDefaultAsync(t => t.TenantId == tenantId);
             if (traffic == null)
             {
-                CreateTrafficAsync();
+                await CreateTrafficAsync();
             }
             else
             {
@@ -127,23 +127,14 @@ namespace MultiTenancy.Services.TrafficServices
             var traffic = await _context.traffics.FirstOrDefaultAsync(t => t.TenantId == tenantId);
             if (traffic == null)
             {
-                traffic = new Traffic
-                {
-                    TenantId = tenantId,
-                    DateNow = DateTime.UtcNow,
-                    RequestDates = new List<DateTime> { DateTime.UtcNow }
-                };
-                await _context.traffics.AddAsync(traffic);
+                await CreateTrafficAsync();
             }
             else
             {
-                // Remove requests older than 30 days
                 traffic.RequestDates.RemoveAll(d => (DateTime.UtcNow - d).TotalDays >= 30);
 
-                // Add new request timestamp
                 traffic.RequestDates.Add(DateTime.UtcNow);
 
-                // Update DateNow to reflect the latest update
                 traffic.DateNow = DateTime.UtcNow;
 
                 _context.traffics.Update(traffic);

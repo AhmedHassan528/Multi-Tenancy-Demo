@@ -19,11 +19,18 @@ namespace MultiTenancy.Models.CheckOutModels
         [Required]
         public decimal TotalAmount { get; set; }
 
+        [Column("paymentMethodType")]
+
         public string paymentMethodType { get; set; }
 
         public bool status { get; set; } = false;
 
+        [Column("statusMess")]
+
         public string statusMess { get; set; } = "Pending";
+
+
+        [Column("CustomerName")]
 
         public string CustomerName { get; set; }
 

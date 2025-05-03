@@ -68,7 +68,7 @@ namespace MultiTenancy.Services.WishListServices
                 var wishlist = await _context.WishLists.FirstOrDefaultAsync(w => w.UserId == userId);
                 return wishlist ?? new WishListModel { UserId = userId, ProductsIDs = new List<int>() };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new Exception("Error while getting wishlist ");
             }
@@ -138,7 +138,7 @@ namespace MultiTenancy.Services.WishListServices
 
                 return products;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new Exception("Error while getting products from wishlist");
             }

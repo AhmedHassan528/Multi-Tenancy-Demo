@@ -1,0 +1,5 @@
+    "OpenAI": {
+        "ApiKey": "71v1JKgGJtfvkXtmLpVUIlkW3z2nqio4F4CaAX40sG796a8D36spJQQJ99BCACYeBjFXJ3w3AAAAACOGDOvk",
+        "Endpoint": "https://azure-graduateproject-aou.cognitiveservices.azure.com/",
+        "Model": "gpt-3.5-turbo"
+    },
