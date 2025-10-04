@@ -7,6 +7,12 @@ The system supports user authentication, product management, categories, brands,
 
 ---
 
+## 🌐 Postman Workspace
+You can explore and test all APIs online using the public Postman workspace:  
+👉 [**Open API on Postman**](https://www.postman.com/avionics-geologist-69968294/ecom/request/ptutkc0/create-product?tab=auth)
+
+---
+
 ## ⚙️ Technology Stack
 - **Backend:** ASP.NET Core Web API (.NET 8)
 - **Database:** SQL Server (Separate DB per Tenant)
